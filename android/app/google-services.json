@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "1001855471334",
+    "firebase_url": "https://yemey-siarot.firebaseio.com",
+    "project_id": "yemey-siarot",
+    "storage_bucket": "yemey-siarot.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1001855471334:android:ca9902b5c7c5fc813ab527",
+        "android_client_info": {
+          "package_name": "com.example.shifts"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1001855471334-v9ujaat7ck5gb8ms6up6a53b4tgpg5rt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBylmGDFvW4cB7_TXsbiRj2ATiVkq6cws8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1001855471334-v9ujaat7ck5gb8ms6up6a53b4tgpg5rt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
