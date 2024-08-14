@@ -22,7 +22,7 @@ import 'system_settings_page.dart';
 import 'multi_date_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
+// still stest
 
 void main() async {
   await Firebase.initializeApp(
@@ -38,7 +38,7 @@ void main() async {
           ),
         ),
       ));
-  // test git
+
 }
 
 class Controller extends GetxController {
