@@ -20,9 +20,8 @@ import 'package:screenshot/screenshot.dart';
 import 'create_new_event.dart';
 import 'system_settings_page.dart';
 import 'multi_date_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+//import 'package:shared_preferences/shared_preferences.dart';
 
-// still stest
 
 void main() async {
   await Firebase.initializeApp(
@@ -69,26 +68,26 @@ class Controller extends GetxController {
   List<String> eventStatusModes = ['פעיל', 'סגור', 'אילוצים'];
   var currentEvent = ''.obs;
   var currentEventStatus = ''.obs;
-  late SharedPreferences prefs;
+  //late SharedPreferences prefs;
 
 
   @override
   onInit() async {
-    //await initPref();
     await loadEventMetadata();
     await loadEventInstructors();
     await loadEventDays();
     if (platformOpen.value) {
       await loadSelectedDayInstructors(_focusedDay.value);
     }
+    //initPref();
+    //adminUX.value = prefs.getBool('admin')??false;
     loading.value = false;
     update();
     print('done init.');
   }
 
   initPref() async {
-    prefs = await SharedPreferences.getInstance();
-    adminUX.value = prefs.getBool('admin')??false;
+    //prefs = await SharedPreferences.getInstance();
   }
 
   void addInstructor(String instructorId, var instructorData) {
@@ -402,8 +401,9 @@ class Home extends StatelessWidget {
                       context: context,
                       builder: (BuildContext context) =>
                           AdminPinDialog(controller.admins));
-                  //await controller.prefs.setBool('admin', res??false);
                   controller.adminUX.value = res ?? false;
+                  //await controller.prefs.setBool('admin', res??false);
+
                 },
                 child: Column(
                     children: [
@@ -1225,11 +1225,7 @@ class DayReportImage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Directionality(
         textDirection: TextDirection.rtl,
-        child: Scaffold(
-        appBar: AppBar(
-        title: const Text('הכנת דוח ימי מילואים'),
-    ),
-    body:Column(
+        child: Column(
       children: [
         Image.network(
           'assets/images/logo.png',
@@ -1274,7 +1270,7 @@ class DayReportImage extends StatelessWidget {
             )),
         ),
       ],
-    )));
+    ));
   }
 }
 
