@@ -16,14 +16,33 @@ class Instructor {
   final String mobile;
   final String email;
   int? maxDays;
+  final List<dynamic>? daysOff;
+  int  assignDays;
 
-  Instructor(this.armyId,this.firstName,this.lastName,this.mobile,this.email,{this.maxDays});
+  Instructor(this.armyId,this.firstName,this.lastName,this.mobile,this.email,{this.maxDays, this.daysOff, this.assignDays=0});
 
   void set setMaxDays(int _maxDays) {
     maxDays = _maxDays;
   }
+
+  void addAssignedDay() {
+    assignDays = assignDays + 1;
+  }
+
   @override
   String toString() => armyId;
+
+  String get daysOffStr {
+    List<String> dates =[];
+    daysOff?.forEach((dayOff) {
+      DateTime date = dayOff.toDate();
+      String dateKey = "${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}";
+      dates.add(dateKey);
+      });
+    if (dates.length<1) dates.add('איו אילוצים');
+    return dates.toString();
+  }
+
 }
 
 class Request {

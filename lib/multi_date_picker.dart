@@ -52,12 +52,6 @@ class _MultiDatePickerState extends State<MultiDatePicker> {
          }
       );
     });
-    // bool? res =
-    // await showDialog<bool>(
-    //     context: context,
-    //     builder: (BuildContext
-    //     context) =>
-    //         MultiDayReportImage(widget.instructorsPerDay, selectedDaysIndexes));
     screenshotController
         .captureFromLongWidget(
       InheritedTheme.captureAll(
@@ -196,6 +190,7 @@ class _MultiDatePickerState extends State<MultiDatePicker> {
 
 }
 
+
 class MultiDayReportImage extends StatelessWidget {
   final List listByDay;
   final List selectedDays;
@@ -210,6 +205,8 @@ class MultiDayReportImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    //print(listByDay);
+   //print(selectedDays);
     return Center(
         child: Column(
           children: [

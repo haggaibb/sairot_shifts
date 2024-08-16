@@ -20,6 +20,7 @@ import 'package:screenshot/screenshot.dart';
 import 'create_new_event.dart';
 import 'system_settings_page.dart';
 import 'multi_date_picker.dart';
+import 'reports.dart';
 //import 'package:shared_preferences/shared_preferences.dart';
 
 
@@ -58,7 +59,7 @@ class Controller extends GetxController {
   RxBool daysOffDone = true.obs;
   RxList daysForInstructor = [].obs;
   RxInt maxInstructorsPerDay = 0.obs;
-  Rx<bool> adminUX = false.obs;
+  Rx<bool> adminUX = true.obs;
   RxList<String> admins = <String>[].obs;
   RxList<Instructor> newEventInstructors = RxList<Instructor>();
   RxList<DateTime> newEventDates = RxList<DateTime>();
@@ -79,6 +80,7 @@ class Controller extends GetxController {
     if (platformOpen.value) {
       await loadSelectedDayInstructors(_focusedDay.value);
     }
+    await getAssignedDays();
     //initPref();
     //adminUX.value = prefs.getBool('admin')??false;
     loading.value = false;
@@ -97,8 +99,10 @@ class Controller extends GetxController {
       instructorData['last_name'] ?? 'NA',
       instructorData['mobile'] ?? 'NA',
       instructorData['email'] ?? 'NA',
+      daysOff:  instructorData['days_off'],
       //maxDays : instructorData['max_days']
     ));
+
   }
 
   removeInstructorFromDay(String instructorId, DateTime selectedDay) async {
@@ -215,6 +219,8 @@ class Controller extends GetxController {
       var instructorData = element.data() as Map<String, dynamic>;
       addInstructor(element.id, instructorData);
     });
+    //List<Instructor> eventInstructorsSorted = eventInstructors;
+    eventInstructors.sort((a, b) => a.firstName.compareTo(b.firstName));
   }
 
   loadSelectedDayInstructors(DateTime selectedDay) async {
@@ -291,6 +297,19 @@ class Controller extends GetxController {
     });
   }
 
+  getAssignedDays() async {
+    for (List day in instructorsPerDay) {
+      for (var instructor in day) {
+        var instructorIndex = eventInstructors.indexWhere((element) => element.armyId==instructor['armyId']);
+        if (instructorIndex>-1) {
+          eventInstructors[instructorIndex].addAssignedDay();
+        }
+      }
+    }
+
+
+  }
+
   sendMiluimDayReportMail(
       List<Instructor> instructorsList, String dateKey) async {
     var subject = "-" + " דוח יומי מילואים " + "-";
@@ -362,9 +381,9 @@ class Controller extends GetxController {
     );
   }
 
-  saveMiluimDayReportImage(bytes, String dateKey) async {
+  saveMiluimDayReportImage(bytes, String title) async {
     await FileSaver.instance.saveFile(
-      name: dateKey, // you can give the CSV file name here.
+      name: title, // you can give the CSV file name here.
       bytes: bytes,
       ext: 'jpeg',
       mimeType: MimeType.jpeg,
@@ -575,15 +594,15 @@ class Home extends StatelessWidget {
                   leading: const Icon(
                     Icons.add_outlined,
                   ),
-                  title: const Text('דוח רב יומי'),
+                  title: const Text('הפקת דוחות'),
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                          builder: (context) => Directionality(
+                          builder: (context) => const Directionality(
                             // add this
-                            textDirection: TextDirection
-                                .rtl, // set this property
-                            child: MultiDatePicker(instructorsPerDay: controller.instructorsPerDay, startDate: controller.startDate.value, endDate: controller.endDate.value,eventDays: controller.eventDays,)
+                              textDirection: TextDirection
+                                  .rtl, // set this property
+                              child: Reports()
                           )),
                     );
                   },
