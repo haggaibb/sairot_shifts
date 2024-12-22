@@ -23,6 +23,7 @@ class _ShiftsTableViewState extends State<ShiftsTableView> {
   @override
   void initState() {
     super.initState();
+    //print(widget.instructorsPerDayList[0]);
     _controllers = LinkedScrollControllerGroup();
     _headController = _controllers.addAndGet();
     _bodyController = _controllers.addAndGet();

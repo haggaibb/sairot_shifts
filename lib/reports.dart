@@ -141,9 +141,9 @@ class DaysOffReportPage extends StatelessWidget {
       {super.key});
 
   final ScreenshotController screenshotController = ScreenshotController();
-
   @override
   Widget build(BuildContext context) {
+    List<Instructor> instructors = controller.eventInstructors;
     return Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
@@ -151,107 +151,48 @@ class DaysOffReportPage extends StatelessWidget {
             title: const Text('דוח אילוצי מדריכים'),
           ),
           body: Center(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      screenshotController
-                          .captureFromLongWidget(
-                        InheritedTheme.captureAll(
-                          context,
-                          Material(
-                            child: DaysOffReportReportImage('דוח אילוצי מדריכים',controller.eventInstructors),
-                          ),
-                        ),
-                        delay: Duration(milliseconds: 100),
-                        context: context,
-                      )
-                          .then((capturedImage) async {
-                        await controller.saveMiluimDayReportImage(
-                            capturedImage, 'דוח אילוצי מדריכים');
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text(
-                              'הקובץ נשמר',
-                              style: TextStyle(color: Colors.white),
-                            )),
-                      );
-                    },
-                    child: Container(
-                      width: 180,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: const [
-                          Icon(Icons.save_alt),
-                          Text('הורד דוח'),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                // Padding(
-                //   padding: const EdgeInsets.all(12.0),
-                //   child: ElevatedButton(
-                //     onPressed: () async {
-                //       await controller.saveMiluimDayReportCSV(
-                //           controller.eventInstructors, 'TODO');
-                //       ScaffoldMessenger.of(context).showSnackBar(
-                //         const SnackBar(
-                //             content: Text(
-                //               'הקובץ נשמר',
-                //               style: TextStyle(color: Colors.white),
-                //             )),
-                //       );
-                //     },
-                //     child: Container(
-                //       width: 180,
-                //       child: Row(
-                //         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                //         children: const [
-                //           Icon(Icons.table_rows_outlined),
-                //           Text('שמור לקובץ CSV'),
-                //         ],
-                //       ),
-                //     ),
-                //   ),
-                // ),
-                Expanded(
-                  child: Container(
-                    child: Center(
-                      child: ListView.builder(
-                          itemCount: controller.eventInstructors.length,
-                          itemBuilder: (context, index) {
-                            final instructor = controller.eventInstructors[index];
-                            return Row(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 20),
-                                  child: Text(
-                                    '${index + 1}. ${instructor.firstName} ${instructor.lastName}',
-                                    style: TextStyle(
-                                        //fontWeight: FontWeight.bold,
-                                        fontSize: 12),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 20),
-                                  child: Text(
-                                    instructor.daysOffStr,
-                                    style: TextStyle(
-                                      //fontWeight: FontWeight.bold,
-                                        fontSize: 8),
-                                  ),
-                                ),
-                              ],
-                            );
-                          }),
-                    ),
-                  ),
-                ),
-              ],
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Image.network('assets/images/logo.png' ,height: 50,),
+                  Text('דוח אילוצי מדריכים', style: TextStyle(fontSize: 20),),
+                  const SizedBox(width: 200, child: Divider(thickness: 2, color: Colors.black,)),
+                  Directionality(textDirection: TextDirection.rtl,
+                      child: DataTable(
+                          columns: const <DataColumn>[
+                            DataColumn(
+                              label: Text(
+                                textDirection: TextDirection.rtl,
+                                'שם מלא',
+                                style: TextStyle(fontStyle: FontStyle.italic),
+                              ),
+                            ),
+                            DataColumn(
+                              label: Text(
+                                textDirection: TextDirection.rtl,
+                                'ת.ז.',
+                                style: TextStyle(fontStyle: FontStyle.italic),
+                              ),
+                            ),
+                            DataColumn(
+                              label: Text(
+                                textDirection: TextDirection.rtl,
+                                'אילוצים',
+                                style: TextStyle(fontStyle: FontStyle.italic),
+                              ),
+                            ),
+                          ],
+                          rows: List.generate(instructors.length, (index) =>
+                              DataRow(
+                                cells: <DataCell>[
+                                  DataCell(Text(textDirection: TextDirection.rtl,'${instructors[index].firstName} ${instructors[index].lastName}')),
+                                  DataCell(Text(textDirection: TextDirection.rtl,instructors[index].armyId)),
+                                  DataCell(Text(style: TextStyle(fontSize: 8), softWrap: true, textDirection: TextDirection.rtl,instructors[index].daysOffStr)),
+                                ],
+                              ))
+                      ))
+                ]
+              ),
             ),
           ),
         ));
@@ -361,32 +302,31 @@ class DaysCountReportPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Padding(
-                //   padding: const EdgeInsets.all(12.0),
-                //   child: ElevatedButton(
-                //     onPressed: () async {
-                //       await controller.saveMiluimDayReportCSV(
-                //           controller.eventInstructors, 'TODO');
-                //       ScaffoldMessenger.of(context).showSnackBar(
-                //         const SnackBar(
-                //             content: Text(
-                //               'הקובץ נשמר',
-                //               style: TextStyle(color: Colors.white),
-                //             )),
-                //       );
-                //     },
-                //     child: Container(
-                //       width: 180,
-                //       child: Row(
-                //         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                //         children: const [
-                //           Icon(Icons.table_rows_outlined),
-                //           Text('שמור לקובץ CSV'),
-                //         ],
-                //       ),
-                //     ),
-                //   ),
-                // ),
+                Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      await controller.saveInstructorsDayCountReportCSV('דוח הקצאת ימי מילואים');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text(
+                              'הקובץ נשמר',
+                              style: TextStyle(color: Colors.white),
+                            )),
+                      );
+                    },
+                    child: Container(
+                      width: 180,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: const [
+                          Icon(Icons.table_rows_outlined),
+                          Text('שמור לקובץ CSV'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
                 Expanded(
                   child: Container(
                     child: Center(
@@ -655,86 +595,50 @@ class DaysInstructorsDetailedReportImage extends StatelessWidget {
           Image.network('assets/images/logo.png' ,height: 50,),
           Text(title, style: TextStyle(fontSize: 20),),
           const SizedBox(width: 200, child: Divider(thickness: 2, color: Colors.black,)),
-          Container(
-            child: Center(
-              child: Column(
-                children: List.generate(instructors.length, (index) =>
-                Card(
-                  elevation: 2,
-                  shadowColor: Colors.greenAccent,
-                  child:
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Text('${instructors[index].firstName} ${instructors[index].lastName}',style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text(instructors[index].armyId),
-                      Row(
-                        textDirection: TextDirection.rtl,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: <Widget>[
-                          const Padding(
-                            padding: EdgeInsets.only(left:8,right:20,top :0, bottom: 0),
-                            child: Text('ימים מוקצים' ,style: TextStyle(fontWeight: FontWeight.bold),),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        textDirection: TextDirection.rtl,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: <Widget>[
-                          Padding(
-                            padding: const EdgeInsets.only(left:8.0,right:20,top :0, bottom: 5),
-                            child: Text(instructors[index].assignDays.toString()),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        textDirection: TextDirection.rtl,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: <Widget>[
-                          const Padding(
-                            padding: EdgeInsets.only(left:8.0,right:20,top :5, bottom: 0),
-                            child: Text('אילוצים',style: TextStyle(fontWeight: FontWeight.bold)),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        textDirection: TextDirection.rtl,
-                        children: [
-                          instructors[index].daysOff!.length>0?
-                          Padding(
-                            padding: const EdgeInsets.only(left:0.0,right:20,top :0, bottom: 0),
-                            child: SizedBox(
-                              height: ((instructors[index].daysOff!.length/4).floorToDouble()+1)*50,
-                              width: 200,
-                              child: instructors[index].daysOff!.length>0?
-                              GridView.count(
-                                shrinkWrap: true,
-                                crossAxisCount: 4,
-                                children: List.generate(instructors[index].daysOff!.length, (daysOffIndex) {
-                                  return Text(
-                                    '${(instructors[index].daysOff?[daysOffIndex].toDate()).day}/'
-                                        '${(instructors[index].daysOff?[daysOffIndex].toDate()).month}',
-                                  );
-                                }),
-                              )
-                                  :Text('אין אילוצים'),
-                            ),
-                          )
-                              :Padding(
-                            padding: EdgeInsets.only(left:0.0,right:20,top :0, bottom: 5),
-                            child: Text('אין אילוצים'),
-                          ),
-
-                        ],
-                      )
-                    ],
-                  ),
-                )
+          Directionality(textDirection: TextDirection.rtl,
+              child: DataTable(
+            columns: const <DataColumn>[
+              DataColumn(
+                label: Text(
+                  textDirection: TextDirection.rtl,
+                  'שם מלא',
+                  style: TextStyle(fontStyle: FontStyle.italic),
                 ),
-              )
-            ),
-          )
+              ),
+              DataColumn(
+                label: Text(
+                  textDirection: TextDirection.rtl,
+                  'ת.ז.',
+                  style: TextStyle(fontStyle: FontStyle.italic),
+                ),
+              ),
+              DataColumn(
+                label: Text(
+                  textDirection: TextDirection.rtl,
+                  'הקצאה',
+                  style: TextStyle(fontStyle: FontStyle.italic),
+                ),
+              ),
+              DataColumn(
+                label: Text(
+                  textDirection: TextDirection.rtl,
+                  'אילוצים',
+                  style: TextStyle(fontStyle: FontStyle.italic),
+                ),
+              ),
+            ],
+            rows:
+            List.generate(instructors.length, (index) =>
+                DataRow(
+                  cells: <DataCell>[
+                    DataCell(Text(textDirection: TextDirection.rtl,'${instructors[index].firstName} ${instructors[index].lastName}')),
+                    DataCell(Text(textDirection: TextDirection.rtl,instructors[index].armyId)),
+                    DataCell(Text(textDirection: TextDirection.rtl,instructors[index].assignDays.toString())),
+                    DataCell(Text(textDirection: TextDirection.rtl,instructors[index].daysOffStr, style: TextStyle(fontSize: 8),)),
+                  ],
+                )
+            )
+          ))
         ],
       ),
     );

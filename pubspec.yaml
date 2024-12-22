@@ -51,6 +51,7 @@ dependencies:
   screenshot: ^2.2.0
   http: ^1.2.2
   shared_preferences: ^2.2.3
+  flutter_to_pdf: ^0.2.0
 
 dev_dependencies:
   flutter_test:

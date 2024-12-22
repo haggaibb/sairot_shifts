@@ -1,3 +1,5 @@
+import 'dart:js_interop';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -5,6 +7,9 @@ import './utils.dart';
 import 'dart:collection';
 import 'package:screenshot/screenshot.dart';
 import 'package:file_saver/file_saver.dart';
+import 'package:csv/csv.dart';
+import 'dart:typed_data';
+import 'dart:convert';
 
 
 class MultiDatePicker extends StatefulWidget {
@@ -42,6 +47,41 @@ class _MultiDatePickerState extends State<MultiDatePicker> {
     );
   }
 
+  saveToCSV() async {
+    List<List<dynamic>> rows = [];
+    for (var date in _selectedDays) {
+      rows.add([toDateKey(date)]);
+      var dayIndex = widget.eventDays.indexWhere((element) { return element==toDateKey(date);});
+      var indexStr = 1;
+      for (var instructor in widget.instructorsPerDay[dayIndex]) {
+        rows.add([
+          indexStr,
+          instructor['lastName'],
+          instructor['firstName'],
+          instructor['armyId'].toString()
+        ]);
+        indexStr++;
+      }
+      rows.add([]);
+      rows.add([]);
+    }
+    // Convert your CSV string to a Uint8List for downloading.
+    String csv = const ListToCsvConverter().convert(rows);
+    //Uint8List bytes = Uint8List.fromList(utf8.encode(csv));
+    List<int> intBytes = List.from(utf8.encode(csv));
+    intBytes.insert(0, 0xBF );
+    intBytes.insert(0, 0xBB );
+    intBytes.insert(0, 0xEF );
+    // This will download the file on the device.
+    Uint8List bytes = Uint8List.fromList(intBytes);
+    await FileSaver.instance.saveFile(
+      name: 'multi_day_report', // you can give the CSV file name here.
+      bytes: bytes,
+      ext: 'csv',
+      mimeType: MimeType.csv,
+    );
+  }
+
   Future<void> generateReport() async {
     List selectedDays = [];
     _selectedDays.forEach((element) {
@@ -57,7 +97,7 @@ class _MultiDatePickerState extends State<MultiDatePicker> {
       InheritedTheme.captureAll(
         context,
         Material(
-          child: MultiDayReportImage(widget.instructorsPerDay,selectedDays),
+          child: MultiDayReportImage(widget.instructorsPerDay,selectedDays,widget.eventDays),
         ),
       ),
       delay: Duration(milliseconds: 100),
@@ -177,6 +217,15 @@ class _MultiDatePickerState extends State<MultiDatePicker> {
                               child: const Text('תכלול הדוח'),
                             ),
                           ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16.0),
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                await saveToCSV();
+                              },
+                              child: const Text('CSV'),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -194,19 +243,24 @@ class _MultiDatePickerState extends State<MultiDatePicker> {
 class MultiDayReportImage extends StatelessWidget {
   final List listByDay;
   final List selectedDays;
+  final List eventDays;
 
-  MultiDayReportImage(this.listByDay, this.selectedDays, {super.key});
+  MultiDayReportImage(this.listByDay, this.selectedDays, this.eventDays, {super.key});
 
   toDateKey(DateTime selectedDay) {
     String dateKey =
         "${selectedDay.day.toString().padLeft(2, '0')}-${selectedDay.month.toString().padLeft(2, '0')}-${selectedDay.year.toString()}";
   return dateKey;
   }
+  getDayIndex(rowIndex) {
+    return eventDays.indexWhere((element) => element==toDateKey(selectedDays[rowIndex]['date']));
+  }
 
   @override
   Widget build(BuildContext context) {
     //print(listByDay);
-   //print(selectedDays);
+
+
     return Center(
         child: Column(
           children: [
@@ -223,7 +277,7 @@ class MultiDayReportImage extends StatelessWidget {
                         width: 300,
                         child: Column(
                             children : List.generate(
-                                listByDay[selectedDays[rowIndex]['index']].length, (index) =>
+                                listByDay[getDayIndex(rowIndex)].length, (index) =>
                                 Row(
                                     textDirection: TextDirection.rtl,
                                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -232,12 +286,12 @@ class MultiDayReportImage extends StatelessWidget {
                                         padding: const EdgeInsets.only(left: 8.0, right: 50),
                                         child: Text('.${index+1}'),
                                       ),
-                                      Text(listByDay[selectedDays[rowIndex]['index']][index]['armyId']),
+                                      Text(listByDay[getDayIndex(rowIndex)][index]['armyId']),
                                       Padding(
                                         padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                                        child: Text(listByDay[selectedDays[rowIndex]['index']][index]['firstName']),
+                                        child: Text(listByDay[getDayIndex(rowIndex)][index]['firstName']),
                                       ),
-                                      Text(listByDay[selectedDays[rowIndex]['index']][index]['lastName']),
+                                      Text(listByDay[getDayIndex(rowIndex)][index]['lastName']),
                                     ]
                                 )
                                 ))

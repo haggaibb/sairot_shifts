@@ -8,6 +8,7 @@ import 'package:multi_select_flutter/multi_select_flutter.dart';
 class ExchangeController extends GetxController {
   var db = FirebaseFirestore.instance;
   var eventName = '';
+  RxBool requestsLoading = true.obs;
   List<Request> allRequests = <Request>[].obs;
   RxList<Request> selectedDayRequests = RxList<Request>();
   RxList<Instructor> eventInstructors = RxList<Instructor>();
@@ -26,34 +27,39 @@ class ExchangeController extends GetxController {
     await loadEventMetadata();
     await loadEventInstructors();
     await loadAllRequests();
+    requestsLoading.value = false;
+    super.onInit();
     //await loadSelectedDayRequests(_focusedDay.value);
   }
 
-
   void addInstructor(String instructorId, var instructorData) {
+    var maxDaysInt = int.parse(instructorData['max_days']);
     eventInstructors.add(Instructor(
         instructorId,
         instructorData['first_name'],
         instructorData['last_name'],
-        instructorData['mobile'] ,
+        instructorData['mobile'],
         instructorData['email'],
-        maxDays: instructorData['max_days'],
-    ));
+        maxDays: maxDaysInt));
   }
 
   void addDayRequest(String requestId, var requestData) {
-    //print(requestData);
     Timestamp timestampRequestInit = requestData['request_init'];
     Timestamp timestampRequestGiveDay = requestData['give_day'];
-    // Timestamp timestampRequestTakeDay =
-    //     requestData['take_day'] ?? Timestamp.fromMillisecondsSinceEpoch(0);
+    // Convert take_day from List<dynamic> to List<DateTime>
+    List<dynamic>? takeDayList = requestData['take_day'];
+    List<DateTime>? convertedTakeDayList = takeDayList?.map((element) {
+          Timestamp ts = element as Timestamp;
+          return ts.toDate();
+        }).toList() ??
+        [DateTime(1971)];
     selectedDayRequests.add(Request(
         requestData['instructor_id'],
         requestData['full_name'],
         timestampRequestInit.toDate(),
         requestData['type'] ?? 'NA',
         timestampRequestGiveDay.toDate(),
-        requestData['take_day']??[DateTime(1971)],
+        convertedTakeDayList,
         requestId));
   }
 
@@ -72,10 +78,7 @@ class ExchangeController extends GetxController {
         requestData['type'] ?? 'NA',
         timestampRequestGiveDay.toDate(),
         takeDays,
-        requestId
-
-        /// FIX
-        ));
+        requestId));
   }
 
   loadEventMetadata() async {
@@ -119,45 +122,42 @@ class ExchangeController extends GetxController {
     selectedDayRequests.clear();
     for (var element in requestsDayList) {
       var requestData = element.data() as Map<String, dynamic>;
-      //print(requestData);
       //print(requestData['take_day'].length<1);
-      if (requestData['take_day'].length<1) requestData['take_day']=[DateTime(1971)];
+      if (requestData['take_day'].length < 1)
+        requestData['take_day'] = [Timestamp.fromDate(DateTime(1971))];
       //print(requestData);
       //print(selectedDayRequests.length);
       addDayRequest(element.id, requestData);
-      //print(selectedDayRequests.length);
-      //print('selectedDayRequests:');
-      //print(selectedDayRequests);
-
     }
-   // print(selectedDayRequests);
     _selectedDay = selectedDay;
+
     _focusedDay.value = selectedDay;
     update();
   }
 
-  loadAllRequests() async {
+  Future<void> loadAllRequests() async {
     DateTime today = DateTime.now();
-    //today = DateTime.parse('2023-01-01'); /// for debug todo del this
+    //today = DateTime(2025,1,17);
     allRequests.clear();
-    CollectionReference eventDaysRef =
-        db.collection('Events/' + eventName + '/days');
+    CollectionReference eventDaysRef = db.collection('Events/$eventName/days');
     QuerySnapshot eventDaysQuery = await eventDaysRef.get();
-    eventDaysQuery.docs.forEach((day) async {
+    // Use a regular for loop or for-in loop instead of forEach
+    for (var day in eventDaysQuery.docs) {
       var dayData = day.data() as Map<String, dynamic>;
       var dayDate = dayData['date'].toDate();
       String dateKey =
           "${dayDate.day.toString().padLeft(2, '0')}-${dayDate.month.toString().padLeft(2, '0')}-${dayDate.year.toString()}";
-
-      CollectionReference expiredRequestsDaysRef =
-      db.collection('Events/$eventName/days/$dateKey/requests');
-      QuerySnapshot expiredRequestsDaySnap = await expiredRequestsDaysRef.where('give_day', isLessThanOrEqualTo: today).get();
-      for (var expiredDay in expiredRequestsDaySnap.docs) {
-        await expiredDay.reference.delete();
-      }
+      // CollectionReference expiredRequestsDaysRef = db.collection('Events/$eventName/days/$dateKey/requests');
+      // QuerySnapshot expiredRequestsDaySnap = await expiredRequestsDaysRef
+      //     .where('give_day', isLessThanOrEqualTo: today)
+      //     .get();
+      // for (var expiredDay in expiredRequestsDaySnap.docs) {
+      //   await expiredDay.reference.delete();
+      // }
       CollectionReference requestsDaysRef =
-      db.collection('Events/$eventName/days/$dateKey/requests');
-      QuerySnapshot requestsDaySnap = await requestsDaysRef.get();
+          db.collection('Events/$eventName/days/$dateKey/requests');
+      QuerySnapshot requestsDaySnap =
+          await requestsDaysRef.where('give_day', isGreaterThan: today).get();
       if (requestsDaySnap.size > 0) {
         var requestsDayList = requestsDaySnap.docs;
         for (var element in requestsDayList) {
@@ -165,7 +165,7 @@ class ExchangeController extends GetxController {
           addToAllRequests(element.id, requestData);
         }
       }
-    });
+    }
     update();
   }
 
@@ -182,7 +182,6 @@ class ExchangeController extends GetxController {
     update();
     return daysForInstructor;
   }
-
 
   loadDaysWithoutInstructor(String instructorId) async {
     daysWithoutInstructor.value = [];
@@ -226,17 +225,17 @@ class ExchangeController extends GetxController {
     print('submitted');
   }
 
-  approveRequest(String instructorId, Request request, DateTime? takeDay) async {
+  approveRequest(
+      String instructorId, Request request, String? takeDay) async {
     var requestObject = {
       'instructor_id': request.armyId,
       'full_name': request.fullName,
       'give_day': request.giveDay,
-      'take_day': request.takeDays,
+      'take_day': takeDay,
       'type': request.type,
       'request_init': request.requestInit
     };
     if (instructorId == '') return;
-
     /// first give day to instructor
     var giveDay = request.giveDay;
     String giveDateKey =
@@ -253,9 +252,7 @@ class ExchangeController extends GetxController {
     });
     if (request.type == 'החלפה' && takeDay != null) {
       /// now give takeDay to request Instructor
-      //var takeDay = request.takeDays?[0] ?? DateTime.now();
-      String takeDateKey =
-          "${takeDay?.day.toString().padLeft(2, '0')}-${takeDay?.month.toString().padLeft(2, '0')}-${takeDay?.year.toString()}";
+      String takeDateKey = takeDay;
       DocumentReference takeDaysRef =
           db.doc('Events/$eventName/days/$takeDateKey');
       await takeDaysRef.update({
@@ -281,7 +278,7 @@ class ExchangeController extends GetxController {
       'approval_timestamp': DateTime.now(),
       'approved_by': instructorId,
       'approved_request': request.toJson(),
-      'take_day' : takeDay,
+      'take_day': takeDay,
       'system_status': 'init'
     });
     print('request approval executed');
@@ -309,22 +306,20 @@ class ExchangeController extends GetxController {
   }
 
   addInstructorToDay(String instructorId, String selectedDay) async {
-
     if (instructorId == '') return;
     DocumentReference giveDaysRef =
-    db.doc('Events/$eventName/days/$selectedDay');
-    await giveDaysRef.update({'instructors': FieldValue.arrayUnion([instructorId])});
+        db.doc('Events/$eventName/days/$selectedDay');
+    await giveDaysRef.update({
+      'instructors': FieldValue.arrayUnion([instructorId])
+    });
     print('Instructor added to day');
   }
 
-  addInstructorToSystem(id,Map<String, dynamic> data) async {
-
+  addInstructorToSystem(id, Map<String, dynamic> data) async {
     CollectionReference instructorsRef =
-    db.collection('Events/$eventName/instructors');
+        db.collection('Events/$eventName/instructors');
     await instructorsRef.doc(id).set(data);
   }
-
-
 }
 
 class ExchangeHome extends StatelessWidget {
@@ -333,6 +328,7 @@ class ExchangeHome extends StatelessWidget {
   void _onDaySelected(DateTime selectedDay, DateTime focusedDay) async {
     await controller.loadSelectedDayRequests(selectedDay);
   }
+
   Future<void> removeRequestApprovalDialog(
       BuildContext context, Request request) async {
     return showDialog(
@@ -381,9 +377,9 @@ class ExchangeHome extends StatelessWidget {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text(
-                                'ת.ז. לא מורשה!!!',
-                                style: TextStyle(color: Colors.red),
-                              )),
+                            'ת.ז. לא מורשה!!!',
+                            style: TextStyle(color: Colors.red),
+                          )),
                         );
                         Navigator.pop(context);
                       }
@@ -465,9 +461,7 @@ class ExchangeHome extends StatelessWidget {
               child: Obx(() => ListView.builder(
                   itemCount: controller.selectedDayRequests.length,
                   itemBuilder: (context, index) {
-                    print(index);
                     final request = controller.selectedDayRequests[index];
-                    //print(controller.selectedDayRequests[index].takeDays);
                     //var takeDate = request.takeDays ?? DateTime(1971);
                     //String takeDateStr =
                     //    "${takeDate.day.toString().padLeft(2, '0')}-${takeDate.month.toString().padLeft(2, '0')}-${takeDate.year.toString()}";
@@ -476,7 +470,7 @@ class ExchangeHome extends StatelessWidget {
                       expandedAlignment: Alignment.topRight,
                       //title: Text('${request.type=='exchange'?'החלפה':'למסור'} רוצה ${request.armyId}'),
                       title: Text(
-                          '${request.fullName} רוצה ${request.type == 'החלפה' ?  'החלפה ל ' : 'מסירה '} '),
+                          '${request.fullName} רוצה ${request.type == 'החלפה' ? 'החלפה ' : 'מסירה '} '),
                       children: [
                         Padding(
                           padding: const EdgeInsets.only(
@@ -498,10 +492,9 @@ class ExchangeHome extends StatelessWidget {
                                       builder: (BuildContext context) {
                                         return AlertDialog(
                                           content: Container(
-                                            height: 400,
+                                            height: 450,
                                             child: SwapApproveWizard(
-                                              request: request,
-                                              takeDay: DateTime.now(),
+                                              request: request
                                             ),
 
                                             /// to do change to dropdown of date and add take date
@@ -531,19 +524,30 @@ class ExchangeHome extends StatelessWidget {
                 child: Text('רשימת בקשות כללית'),
               ),
             ),
-            // Expanded(
-            //   child: Obx(() => ListView.builder(
-            //       itemCount: controller.allRequests.length,
-            //       itemBuilder: (context, index) {
-            //         final request = controller.allRequests[index];
-            //         var giveDate = request.giveDay;
-            //         // String takeDateStr =
-            //         //   "${takeDate.day.toString().padLeft(2, '0')}-${takeDate.month.toString().padLeft(2, '0')}-${takeDate.year.toString()}";
-            //         String giveDateStr =
-            //             "${giveDate.day.toString().padLeft(2, '0')}-${giveDate.month.toString().padLeft(2, '0')}-${giveDate.year.toString()}";
-            //         return ExchangeCard(request: request, giveDay: giveDateStr,);
-            //       })),
-            // ),
+            Obx( () =>!controller.requestsLoading.value
+                ? controller.allRequests.isNotEmpty?Expanded(
+              child: ListView.builder(
+                  itemCount: controller.allRequests.length,
+                  itemBuilder: (context, index) {
+                    //print(controller.allRequests[index]);
+                    final request = controller.allRequests[index];
+                    var giveDate = request.giveDay;
+                    // String takeDateStr =
+                    //   "${takeDate.day.toString().padLeft(2, '0')}-${takeDate.month.toString().padLeft(2, '0')}-${takeDate.year.toString()}";
+                    String giveDateStr =
+                        "${giveDate.day.toString().padLeft(2, '0')}-${giveDate.month.toString().padLeft(2, '0')}-${giveDate.year.toString()}";
+                    return ExchangeCard(request: request, giveDay: giveDateStr,);
+                  }),
+            ):const SizedBox.shrink():Padding(
+              padding: const EdgeInsets.all(100.0),
+              child: Column(
+                children: [
+                  LinearProgressIndicator(),
+                  Text('טוען את כל הבקשות')
+                ],
+              ),
+            ),),
+            //Obx(() => controller.requestsLoading.value?const LinearProgressIndicator():const SizedBox.shrink()),
           ],
         ),
       ),
@@ -821,9 +825,7 @@ class _SwapRequestWizardState extends State<SwapRequestWizard> {
 /// Swap - Approve
 class SwapApproveWizard extends StatefulWidget {
   final Request request;
-  final DateTime ?takeDay;
-  const SwapApproveWizard(
-      {super.key, required this.request, this.takeDay});
+  const SwapApproveWizard({super.key, required this.request});
 
   @override
   State<SwapApproveWizard> createState() => _SwapApproveWizardState();
@@ -835,9 +837,21 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final instructorIdController = TextEditingController();
   String typeDropdownValue = listType.first;
+  late String takedaysDropdownValue;
+  List<String> takeDays = [];
+  List<String> commonTakeDays = [];
+  bool loading = true;
   //String giveDateDropdownValue = '';
   //String takeDateDropdownValue = '';
   final controller = Get.put(ExchangeController());
+
+  @override
+  void initState() {
+    DateTime firstTakeDay = widget.request.takeDays![0];
+    takedaysDropdownValue =
+        "${firstTakeDay.day.toString().padLeft(2, '0')}-${firstTakeDay.month.toString().padLeft(2, '0')}-${firstTakeDay.year.toString()}";
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -884,15 +898,22 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
                           if (widget.request.type == 'החלפה') {
                             await controller.loadDaysForInstructor(
                                 instructorIdController.text);
-                            var takeDayDate = widget.takeDay??DateTime.now();
-                            String takeDateKey =
-                                "${takeDayDate.day.toString().padLeft(2, '0')}-${takeDayDate.month.toString().padLeft(2, '0')}-${takeDayDate.year.toString()}";
-                            var takeDaySwapIsValid = controller
-                                .daysForInstructor
-                                .contains(takeDateKey);
+                            for (var takeDayDate in widget.request.takeDays!) {
+                              takeDays.add(
+                                  "${takeDayDate.day.toString().padLeft(2, '0')}-${takeDayDate.month.toString().padLeft(2, '0')}-${takeDayDate.year.toString()}");
+                            }
+                            commonTakeDays = takeDays
+                                .where((element) => controller.daysForInstructor
+                                    .contains(element))
+                                .toList();
+                            var takeDaySwapIsValid = commonTakeDays.isNotEmpty;
                             if (takeDaySwapIsValid) {
                               /// all valid so move on
-                              setState(() => _index++);
+                              setState(() {
+                                loading = false;
+                                takedaysDropdownValue = commonTakeDays[0];
+                                _index++;
+                              });
                             } else {
                               /// not valid take day
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -915,9 +936,10 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
                           Navigator.pop(context);
                         }
                       }
-                    } else if (_index == 1) {
+                    }
+                    else if (_index == 1) {
                       setState(() => _index++);
-                      Navigator.pop(context);
+                      //Navigator.pop(context);
                     }
                   },
                   onStepTapped: (int index) {
@@ -947,6 +969,31 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
                               }
                               return null;
                             },
+                          ),
+                        )),
+                    Step(
+                        title: const Text('בחירת יום להחלפה'),
+                        content: Container(
+                          alignment: Alignment.centerRight,
+                          child: Column(
+                            children: [
+                              DropdownButton(
+                                onChanged: (String? value) {
+                                  setState(() {
+                                    takedaysDropdownValue = value!;
+                                  });
+                                },
+                                value: takedaysDropdownValue,
+                                items: commonTakeDays
+                                    .map<DropdownMenuItem<String>>(
+                                        (String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(value),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
                           ),
                         )),
                     Step(
@@ -997,7 +1044,8 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
                             Row(
                               children: [
                                 widget.request.type == 'החלפה'
-                                    ? Text('')
+                                    ? Text(' ב '+takedaysDropdownValue ,
+                                        style: TextStyle(fontSize: 14))
                                     : Text('', style: TextStyle(fontSize: 14)),
                               ],
                             ),
@@ -1019,7 +1067,9 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
                                 );
                                 await controller.approveRequest(
                                     instructorIdController.text,
-                                    widget.request,widget.takeDay);
+                                    widget.request,
+                                    takedaysDropdownValue
+                                );
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('הבקשה התקבלה')),
@@ -1068,14 +1118,12 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
   }
 }
 
-
 /// exchange request card -0
 class ExchangeCard extends StatefulWidget {
   final Request request;
-  final String  giveDay;
+  final String giveDay;
 
-  const ExchangeCard(
-      {super.key, required this.request, required this.giveDay});
+  const ExchangeCard({super.key, required this.request, required this.giveDay});
 
   @override
   State<ExchangeCard> createState() => _ExchangeCardState();
@@ -1085,7 +1133,7 @@ class _ExchangeCardState extends State<ExchangeCard> {
   late String takeDayDropdownValue;
   final controller = Get.put(ExchangeController());
   final removalIdController = TextEditingController();
-  List<DateTime> takeDays =[];
+  List<DateTime> takeDays = [];
   Future<void> removeRequestApprovalDialog(
       BuildContext context, Request request) async {
     return showDialog(
@@ -1134,9 +1182,9 @@ class _ExchangeCardState extends State<ExchangeCard> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text(
-                                'ת.ז. לא מורשה!!!',
-                                style: TextStyle(color: Colors.red),
-                              )),
+                            'ת.ז. לא מורשה!!!',
+                            style: TextStyle(color: Colors.red),
+                          )),
                         );
                         Navigator.pop(context);
                       }
@@ -1157,11 +1205,9 @@ class _ExchangeCardState extends State<ExchangeCard> {
         takeDays.add(takeDay);
       }
     });
-
      */
-    var millis = widget.request.takeDays![0].millisecondsSinceEpoch;
-    takeDayDropdownValue = millis.toString();
-
+    //var millis = widget.request.takeDays![0].millisecondsSinceEpoch;
+    //takeDayDropdownValue = millis.toString();
     super.initState();
   }
 
@@ -1171,78 +1217,46 @@ class _ExchangeCardState extends State<ExchangeCard> {
     String giveDateStr = widget.giveDay;
     return Card(
         child: ExpansionTile(
-          initiallyExpanded: false,
-          expandedAlignment: Alignment.topRight,
-          title: Text(
-              '${request.fullName}  רוצה ${request.type == 'החלפה' ? ' החלפה של ' : 'מסירה של '} $giveDateStr'),
+      initiallyExpanded: false,
+      expandedAlignment: Alignment.topRight,
+      title: Text(
+          '${request.fullName}  רוצה ${request.type == 'החלפה' ? ' החלפה של ' : 'מסירה של '} $giveDateStr'),
+      children: [
+        Column(
           children: [
-            Column(
-              children: [
-                request.type == 'החלפה'
-                    ? Row(
-                  children: [
-                    const Text(' יכול להחליף ל   '),
-                    DropdownButton(
-                      value: takeDayDropdownValue,
-                      onChanged: (String? value) {
-                        setState(() {
-                          takeDayDropdownValue = value!;
-                        });
-                      },
-                      items: request.takeDays
-                          ?.map<DropdownMenuItem<String>>(
-                              (DateTime date) {
-                            return DropdownMenuItem<String>(
-                              value: date.millisecondsSinceEpoch
-                                  .toString(),
-                              child: Text(toDateKey(date)),
+            Padding(
+              padding: const EdgeInsets.only(top: 20, bottom: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              content: SwapApproveWizard(
+                                  request: request,
+                                  ),
                             );
-                          }).toList(),
-                    ),
-                  ],
-                )
-                    : const SizedBox(
-                  height: 10,
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 20, bottom: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  content: SwapApproveWizard(
-                                      request: request,
-                                      takeDay: DateTime
-                                          .fromMillisecondsSinceEpoch(
-                                          int.parse(
-                                              takeDayDropdownValue))),
-                                );
-                              });
-                        },
-                        style: ButtonStyle(),
-                        child: Text('החלף'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () async {
-                          return removeRequestApprovalDialog(
-                              context, request);
-                        },
-                        style: ButtonStyle(),
-                        child: Text('הסר'),
-                      ),
-                    ],
+                          });
+                    },
+                    style: ButtonStyle(),
+                    child: Text('החלף'),
                   ),
-                ),
-              ],
+                  ElevatedButton(
+                    onPressed: () async {
+                      return removeRequestApprovalDialog(context, request);
+                    },
+                    style: ButtonStyle(),
+                    child: Text('הסר'),
+                  ),
+                ],
+              ),
             ),
           ],
-        ));
+        ),
+      ],
+    ));
   }
 }
-
-

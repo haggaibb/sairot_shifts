@@ -19,6 +19,7 @@ class Instructor {
   final List<dynamic>? daysOff;
   int  assignDays;
 
+
   Instructor(this.armyId,this.firstName,this.lastName,this.mobile,this.email,{this.maxDays, this.daysOff, this.assignDays=0});
 
   void set setMaxDays(int _maxDays) {
@@ -108,6 +109,7 @@ getInstructorData(String instructorId, List<Instructor> instructorsList) {
     }
   }
   if (!found) {
+    print(instructorId);
     instructorData = {
     'armyId' :  '--',
     'firstName' :  '--',

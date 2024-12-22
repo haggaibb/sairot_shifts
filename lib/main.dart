@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,6 +10,7 @@ import 'package:shifts/pref_date_picker.dart';
 import 'package:get/get.dart';
 import 'exchange.dart';
 import 'shifts_table_view.dart';
+import 'shifts_table_view2.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'contacts_list.dart';
 import 'add_new_instructor.dart';
@@ -19,10 +21,7 @@ import 'package:csv/csv.dart';
 import 'package:screenshot/screenshot.dart';
 import 'create_new_event.dart';
 import 'system_settings_page.dart';
-import 'multi_date_picker.dart';
 import 'reports.dart';
-//import 'package:shared_preferences/shared_preferences.dart';
-
 
 void main() async {
   await Firebase.initializeApp(
@@ -38,7 +37,6 @@ void main() async {
           ),
         ),
       ));
-
 }
 
 class Controller extends GetxController {
@@ -59,7 +57,7 @@ class Controller extends GetxController {
   RxBool daysOffDone = true.obs;
   RxList daysForInstructor = [].obs;
   RxInt maxInstructorsPerDay = 0.obs;
-  Rx<bool> adminUX = true.obs;
+  Rx<bool> adminUX = false.obs;
   RxList<String> admins = <String>[].obs;
   RxList<Instructor> newEventInstructors = RxList<Instructor>();
   RxList<DateTime> newEventDates = RxList<DateTime>();
@@ -69,8 +67,8 @@ class Controller extends GetxController {
   List<String> eventStatusModes = ['פעיל', 'סגור', 'אילוצים'];
   var currentEvent = ''.obs;
   var currentEventStatus = ''.obs;
+  RxList<String> checkedIn = <String>[].obs;
   //late SharedPreferences prefs;
-
 
   @override
   onInit() async {
@@ -99,10 +97,9 @@ class Controller extends GetxController {
       instructorData['last_name'] ?? 'NA',
       instructorData['mobile'] ?? 'NA',
       instructorData['email'] ?? 'NA',
-      daysOff:  instructorData['days_off'],
+      daysOff: instructorData['days_off'],
       //maxDays : instructorData['max_days']
     ));
-
   }
 
   removeInstructorFromDay(String instructorId, DateTime selectedDay) async {
@@ -168,6 +165,7 @@ class Controller extends GetxController {
       });
       instructorsPerDay.add(dayWithInstructors);
     });
+
   }
 
   loadEventMetadata() async {
@@ -182,11 +180,14 @@ class Controller extends GetxController {
     var eventMetadata = eventMetadataQuery.data() as Map<String, dynamic>;
     Timestamp timestampStart = eventMetadata['start_date'];
     platformOpen.value = currentEventStatus == 'פעיל' ? true : false;
-    Timestamp timestampDaysOffEndDate = eventMetadata['days_off_end_date']??DateTime(2000);
+    Timestamp timestampDaysOffEndDate =
+        eventMetadata['days_off_end_date'] ?? DateTime(2000);
     DateTime daysOffEndDate = timestampDaysOffEndDate.toDate();
-    if ( currentEventStatus == 'אילוצים') daysOffDone.value = false;
+    if (currentEventStatus == 'אילוצים')
+      daysOffDone.value = false;
     else
-      daysOffDone.value = (daysOffEndDate.compareTo(DateTime.now()) < 0)?false:true;
+      daysOffDone.value =
+          (daysOffEndDate.compareTo(DateTime.now()) < 0) ? false : true;
     startDate.value = timestampStart.toDate();
     Timestamp timestampEnd = eventMetadata['end_date'];
     endDate.value = timestampEnd.toDate();
@@ -248,14 +249,26 @@ class Controller extends GetxController {
     update();
   }
 
+  getDayInstructorsList(DateTime selectedDay) async {
+
+  }
+
   updateSettings() async {
     DocumentReference eventConfigRef = db.doc('Events/config');
     await eventConfigRef.update({
       'current_event': currentEvent.value,
-      'event_status' : currentEventStatus.value,
-      'admins' : admins
+      'event_status': currentEventStatus.value,
+      'admins': admins
     });
     return;
+  }
+
+  updateCheckedIn(selectedDay) async {
+    String dateKey =
+        "${selectedDay.day.toString().padLeft(2, '0')}-${selectedDay.month.toString().padLeft(2, '0')}-${selectedDay.year.toString()}";
+    db.collection('Events/$eventName/days').doc(dateKey).update({
+      'checked_in' : checkedIn
+    });
   }
 
   sendMyDaysMail(instructorId, days) async {
@@ -300,14 +313,13 @@ class Controller extends GetxController {
   getAssignedDays() async {
     for (List day in instructorsPerDay) {
       for (var instructor in day) {
-        var instructorIndex = eventInstructors.indexWhere((element) => element.armyId==instructor['armyId']);
-        if (instructorIndex>-1) {
+        var instructorIndex = eventInstructors
+            .indexWhere((element) => element.armyId == instructor['armyId']);
+        if (instructorIndex > -1) {
           eventInstructors[instructorIndex].addAssignedDay();
         }
       }
     }
-
-
   }
 
   sendMiluimDayReportMail(
@@ -353,6 +365,34 @@ class Controller extends GetxController {
     });
   }
 
+  saveInstructorsDayCountReportCSV(String dateKey) async {
+    List<List<dynamic>> rows = [];
+    rows.add(['ימים מוקצים','שם משפחה', 'שם פרטי', 'מספר אישי']);
+    for (var instructor in eventInstructors) {
+      rows.add([
+        instructor.assignDays.toString(),
+        instructor.lastName,
+        instructor.firstName,
+        instructor.armyId.toString()
+      ]);
+    }
+    // Convert your CSV string to a Uint8List for downloading.
+    String csv = const ListToCsvConverter().convert(rows);
+    //Uint8List bytes = Uint8List.fromList(utf8.encode(csv));
+    List<int> intBytes = List.from(utf8.encode(csv));
+    intBytes.insert(0, 0xBF );
+    intBytes.insert(0, 0xBB );
+    intBytes.insert(0, 0xEF );
+    // This will download the file on the device.
+    Uint8List bytes = Uint8List.fromList(intBytes);
+    await FileSaver.instance.saveFile(
+      name: dateKey, // you can give the CSV file name here.
+      bytes: bytes,
+      ext: 'csv',
+      mimeType: MimeType.csv,
+    );
+  }
+
   saveMiluimDayReportCSV(
       List<Instructor> instructorsList, String dateKey) async {
     List<List<dynamic>> rows = [];
@@ -366,13 +406,13 @@ class Controller extends GetxController {
     }
     // Convert your CSV string to a Uint8List for downloading.
     String csv = const ListToCsvConverter().convert(rows);
-    Uint8List bytes = Uint8List.fromList(utf8.encode(csv));
-
-    //List<int> bytes = List.from(utf8.encode(csv));
-    //bytes.insert(0, 0xBF );
-    //bytes.insert(0, 0xBB );
-    //bytes.insert(0, 0xEF );
+    //Uint8List bytes = Uint8List.fromList(utf8.encode(csv));
+    List<int> intBytes = List.from(utf8.encode(csv));
+    intBytes.insert(0, 0xBF );
+    intBytes.insert(0, 0xBB );
+    intBytes.insert(0, 0xEF );
     // This will download the file on the device.
+    Uint8List bytes = Uint8List.fromList(intBytes);
     await FileSaver.instance.saveFile(
       name: dateKey, // you can give the CSV file name here.
       bytes: bytes,
@@ -383,7 +423,7 @@ class Controller extends GetxController {
 
   saveMiluimDayReportImage(bytes, String title) async {
     await FileSaver.instance.saveFile(
-      name: title, // you can give the CSV file name here.
+      name: title,
       bytes: bytes,
       ext: 'jpeg',
       mimeType: MimeType.jpeg,
@@ -422,11 +462,11 @@ class Home extends StatelessWidget {
                           AdminPinDialog(controller.admins));
                   controller.adminUX.value = res ?? false;
                   //await controller.prefs.setBool('admin', res??false);
-
                 },
-                child: Column(
-                    children: [
-                  SizedBox(width: 80, child: Image.network('assets/images/logo.png')),
+                child: Column(children: [
+                  SizedBox(
+                      width: 80,
+                      child: Image.network('assets/images/logo.png')),
                   const Text(
                     'ימי סיירות',
                     style: TextStyle(fontSize: 20),
@@ -473,8 +513,7 @@ class Home extends StatelessWidget {
                               builder: (context) => Obx(() => PrefDatePicker(
                                   startDate: controller.startDate.value,
                                   endDate: controller.endDate.value,
-                                eventDays : controller.eventDays
-                              )),
+                                  eventDays: controller.eventDays)),
                             ),
                           );
                         },
@@ -564,9 +603,7 @@ class Home extends StatelessWidget {
                                     // add this
                                     textDirection:
                                         TextDirection.rtl, // set this property
-                                    child:
-                                        CreateNewEvent()
-                                    )),
+                                    child: CreateNewEvent())),
                           );
                         },
                       )
@@ -591,22 +628,21 @@ class Home extends StatelessWidget {
                     : const Text(''),
                 (!controller.loading.value && controller.adminUX.value)
                     ? ListTile(
-                  leading: const Icon(
-                    Icons.add_outlined,
-                  ),
-                  title: const Text('הפקת דוחות'),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (context) => const Directionality(
-                            // add this
-                              textDirection: TextDirection
-                                  .rtl, // set this property
-                              child: Reports()
-                          )),
-                    );
-                  },
-                )
+                        leading: const Icon(
+                          Icons.add_outlined,
+                        ),
+                        title: const Text('הפקת דוחות'),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (context) => const Directionality(
+                                    // add this
+                                    textDirection:
+                                        TextDirection.rtl, // set this property
+                                    child: Reports())),
+                          );
+                        },
+                      )
                     : const Text(''),
               ],
             )),
@@ -640,7 +676,7 @@ class Home extends StatelessWidget {
                                   String dateKey =
                                       "${day.day.toString().padLeft(2, '0')}-${day.month.toString().padLeft(2, '0')}-${day.year.toString()}";
                                   return controller.eventDays.contains(dateKey);
-                                 // return controller.eventDays
+                                  // return controller.eventDays
                                 },
                                 calendarStyle: const CalendarStyle(
                                   defaultTextStyle: TextStyle(
@@ -991,7 +1027,7 @@ class LoadingLogo extends StatelessWidget {
 
 class EventNotOpen extends StatelessWidget {
   bool daysOffDone;
-  EventNotOpen(this.daysOffDone,{super.key});
+  EventNotOpen(this.daysOffDone, {super.key});
 
   // This widget is the home page of your application.
 
@@ -1007,35 +1043,45 @@ class EventNotOpen extends StatelessWidget {
                 width: 350, child: Image.network('assets/images/logo.png'))),
         Center(
             child: Container(
-                child:
-                    Text(
-                      daysOffDone?
-                  'המערכת פתוחה רק להזנת אילוצים' : 'המערכת סגורה',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ) )),
+                child: Text(
+          daysOffDone ? 'המערכת פתוחה רק להזנת אילוצים' : 'המערכת סגורה',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ))),
       ],
     );
   }
 }
 
-class DayReportPage extends StatelessWidget {
-  final controller = Get.put(Controller());
+class DayReportPage extends StatefulWidget {
   final List<Instructor> eventInstructors;
   final DateTime selectedDay;
 
-  DayReportPage(
-      {required this.eventInstructors, required this.selectedDay, super.key});
+  const DayReportPage(
+      {super.key, required this.eventInstructors, required this.selectedDay});
+  @override
+  State<DayReportPage> createState() => _DayReportPageState();
+}
 
+class _DayReportPageState extends State<DayReportPage> {
   ScreenshotController screenshotController = ScreenshotController();
+  final controller = Get.put(Controller());
+
 
   @override
   Widget build(BuildContext context) {
     String dateKey =
-        "${selectedDay.day.toString().padLeft(2, '0')}-${selectedDay.month.toString().padLeft(2, '0')}";
+        "${widget.selectedDay.day.toString().padLeft(2, '0')}-${widget.selectedDay.month.toString().padLeft(2, '0')}";
     return Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
           appBar: AppBar(
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back, color: Colors.black),
+              onPressed: () {
+                controller.updateCheckedIn(widget.selectedDay);
+                Navigator.of(context).pop();
+              },
+            ),
             title: const Text('הכנת דוח ימי מילואים'),
           ),
           body: Center(
@@ -1050,7 +1096,8 @@ class DayReportPage extends StatelessWidget {
                         InheritedTheme.captureAll(
                           context,
                           Material(
-                            child: DayReportImage(eventInstructors, dateKey),
+                              child: DayReportImage(
+                                  widget.eventInstructors, dateKey),
                           ),
                         ),
                         delay: Duration(milliseconds: 100),
@@ -1110,25 +1157,54 @@ class DayReportPage extends StatelessWidget {
                   child: Container(
                     child: Center(
                       child: ListView.builder(
-                          itemCount: eventInstructors.length,
+                          itemCount: widget.eventInstructors.length,
                           itemBuilder: (context, index) {
-                            final instructor = eventInstructors[index];
+                            final instructor = widget.eventInstructors[index];
                             return Row(
                               children: [
                                 Checkbox(
                                   checkColor: Colors.white,
                                   fillColor: MaterialStateProperty.resolveWith(
-                                      (Set states) {
+                                      (states) {
                                     if (states
                                         .contains(MaterialState.disabled)) {
-                                      return Colors.orange.withOpacity(.32);
+                                      return Colors.amber;
+                                    } else if (states
+                                        .contains(MaterialState.dragged)) {
+                                      return Colors.blue;
+                                    } else if (states
+                                        .contains(MaterialState.error)) {
+                                      return Colors.brown;
+                                    } else if (states
+                                        .contains(MaterialState.focused)) {
+                                      return Colors.deepOrange;
+                                    } else if (states
+                                        .contains(MaterialState.hovered)) {
+                                      return Colors.cyan;
+                                    } else if (states
+                                        .contains(MaterialState.pressed)) {
+                                      return Colors.green;
+                                    } else if (states.contains(
+                                        MaterialState.scrolledUnder)) {
+                                      return Colors.pink;
+                                    } else if (states
+                                        .contains(MaterialState.selected)) {
+                                      return Colors.teal;
                                     }
-                                    return Colors.orange;
+                                    return null;
                                   }),
                                   onChanged: (bool? value) {
-                                    value = value!;
+                                    setState(() {
+                                      !controller.checkedIn
+                                              .contains(instructor.armyId)
+                                          ? controller.checkedIn
+                                              .add(instructor.armyId)
+                                          : controller.checkedIn
+                                              .remove(instructor.armyId);
+                                    });
                                   },
-                                  value: false,
+                                  value: controller.checkedIn
+                                      .contains(instructor.armyId),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(right: 20),
@@ -1245,51 +1321,52 @@ class DayReportImage extends StatelessWidget {
     return Directionality(
         textDirection: TextDirection.rtl,
         child: Column(
-      children: [
-        Image.network(
-          'assets/images/logo.png',
-          height: 50,
-        ),
-        const Text(
-          'דוח מילואים יומי',
-          style: TextStyle(fontSize: 20),
-        ),
-        Text(dateKey, style: TextStyle(fontSize: 18)),
-        const SizedBox(
-            width: 200,
-            child: Divider(
-              thickness: 2,
-              color: Colors.black,
-            )),
-        Container(
-          height: 800,
-          width: 300,
-          child: Column(
-           crossAxisAlignment: CrossAxisAlignment.center,
-            children: List.generate(
-                eventInstructors.length,
-                    (index) =>
-                        Row(
-                            textDirection: TextDirection.rtl,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(left: 8.0, right: 50),
-                                child: Text('.${index + 1}'),
-                              ),
-                              Text(
-                                eventInstructors[index].armyId,
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                                child: Text(eventInstructors[index].firstName),
-                              ),
-                              Text(eventInstructors[index].lastName),
-                            ])
-            )),
-        ),
-      ],
-    ));
+          children: [
+            Image.network(
+              'assets/images/logo.png',
+              height: 50,
+            ),
+            const Text(
+              'דוח מילואים יומי',
+              style: TextStyle(fontSize: 20),
+            ),
+            Text(dateKey, style: TextStyle(fontSize: 18)),
+            const SizedBox(
+                width: 200,
+                child: Divider(
+                  thickness: 2,
+                  color: Colors.black,
+                )),
+            Container(
+              height: 800,
+              width: 300,
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: List.generate(
+                      eventInstructors.length,
+                      (index) => Row(
+                              textDirection: TextDirection.rtl,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 8.0, right: 50),
+                                  child: Text('.${index + 1}'),
+                                ),
+                                Text(
+                                  eventInstructors[index].armyId,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 8.0, right: 8.0),
+                                  child:
+                                      Text(eventInstructors[index].firstName),
+                                ),
+                                Text(eventInstructors[index].lastName),
+                              ]))),
+            ),
+          ],
+        ));
   }
 }
 
