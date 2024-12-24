@@ -120,7 +120,7 @@ getInstructorData(String instructorId, List<Instructor> instructorsList) {
   return instructorData;
 }
 
-toDateKey(DateTime selectedDay) {
+String toDateKey(DateTime selectedDay) {
   String dateKey = "${selectedDay.day.toString().padLeft(2,'0')}-${selectedDay.month.toString().padLeft(2,'0')}-${selectedDay.year.toString()}";
   return dateKey;
 }

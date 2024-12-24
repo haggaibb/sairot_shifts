@@ -225,8 +225,7 @@ class ExchangeController extends GetxController {
     print('submitted');
   }
 
-  approveRequest(
-      String instructorId, Request request, String? takeDay) async {
+  approveRequest(String instructorId, Request request, String? takeDay) async {
     var requestObject = {
       'instructor_id': request.armyId,
       'full_name': request.fullName,
@@ -236,6 +235,7 @@ class ExchangeController extends GetxController {
       'request_init': request.requestInit
     };
     if (instructorId == '') return;
+
     /// first give day to instructor
     var giveDay = request.giveDay;
     String giveDateKey =
@@ -494,8 +494,7 @@ class ExchangeHome extends StatelessWidget {
                                           content: Container(
                                             height: 450,
                                             child: SwapApproveWizard(
-                                              request: request
-                                            ),
+                                                request: request),
 
                                             /// to do change to dropdown of date and add take date
                                           ),
@@ -524,29 +523,37 @@ class ExchangeHome extends StatelessWidget {
                 child: Text('רשימת בקשות כללית'),
               ),
             ),
-            Obx( () =>!controller.requestsLoading.value
-                ? controller.allRequests.isNotEmpty?Expanded(
-              child: ListView.builder(
-                  itemCount: controller.allRequests.length,
-                  itemBuilder: (context, index) {
-                    //print(controller.allRequests[index]);
-                    final request = controller.allRequests[index];
-                    var giveDate = request.giveDay;
-                    // String takeDateStr =
-                    //   "${takeDate.day.toString().padLeft(2, '0')}-${takeDate.month.toString().padLeft(2, '0')}-${takeDate.year.toString()}";
-                    String giveDateStr =
-                        "${giveDate.day.toString().padLeft(2, '0')}-${giveDate.month.toString().padLeft(2, '0')}-${giveDate.year.toString()}";
-                    return ExchangeCard(request: request, giveDay: giveDateStr,);
-                  }),
-            ):const SizedBox.shrink():Padding(
-              padding: const EdgeInsets.all(100.0),
-              child: Column(
-                children: [
-                  LinearProgressIndicator(),
-                  Text('טוען את כל הבקשות')
-                ],
-              ),
-            ),),
+            Obx(
+              () => !controller.requestsLoading.value
+                  ? controller.allRequests.isNotEmpty
+                      ? Expanded(
+                          child: ListView.builder(
+                              itemCount: controller.allRequests.length,
+                              itemBuilder: (context, index) {
+                                //print(controller.allRequests[index]);
+                                final request = controller.allRequests[index];
+                                var giveDate = request.giveDay;
+                                // String takeDateStr =
+                                //   "${takeDate.day.toString().padLeft(2, '0')}-${takeDate.month.toString().padLeft(2, '0')}-${takeDate.year.toString()}";
+                                String giveDateStr =
+                                    "${giveDate.day.toString().padLeft(2, '0')}-${giveDate.month.toString().padLeft(2, '0')}-${giveDate.year.toString()}";
+                                return ExchangeCard(
+                                  request: request,
+                                  giveDay: giveDateStr,
+                                );
+                              }),
+                        )
+                      : const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.all(100.0),
+                      child: Column(
+                        children: [
+                          LinearProgressIndicator(),
+                          Text('טוען את כל הבקשות')
+                        ],
+                      ),
+                    ),
+            ),
             //Obx(() => controller.requestsLoading.value?const LinearProgressIndicator():const SizedBox.shrink()),
           ],
         ),
@@ -936,8 +943,7 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
                           Navigator.pop(context);
                         }
                       }
-                    }
-                    else if (_index == 1) {
+                    } else if (_index == 1) {
                       setState(() => _index++);
                       //Navigator.pop(context);
                     }
@@ -1044,7 +1050,7 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
                             Row(
                               children: [
                                 widget.request.type == 'החלפה'
-                                    ? Text(' ב '+takedaysDropdownValue ,
+                                    ? Text(' ב ' + takedaysDropdownValue,
                                         style: TextStyle(fontSize: 14))
                                     : Text('', style: TextStyle(fontSize: 14)),
                               ],
@@ -1068,8 +1074,7 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
                                 await controller.approveRequest(
                                     instructorIdController.text,
                                     widget.request,
-                                    takedaysDropdownValue
-                                );
+                                    takedaysDropdownValue);
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('הבקשה התקבלה')),
@@ -1195,6 +1200,45 @@ class _ExchangeCardState extends State<ExchangeCard> {
         });
   }
 
+  TextSpan takeDaysToTextSpan(List<DateTime> takeDays) {
+    // Convert each DateTime to a string using your formatting
+    final List<String> dateStrings = takeDays.map(toDateKey).toList();
+
+    // Helper to create a bold TextSpan
+    TextSpan boldSpan(String text) {
+      return TextSpan(
+        text: text,
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      );
+    }
+
+    // If no dates, return a simple TextSpan
+    if (dateStrings.isEmpty) {
+      return const TextSpan(text: "לא מולאו תאריכים");
+    }
+
+    // If exactly one date, just show it in bold
+    if (dateStrings.length == 1) {
+      return boldSpan(dateStrings.first);
+    }
+    final List<TextSpan> children = [];
+
+    // Add the first n-1 dates with commas
+    for (int i = 0; i < dateStrings.length - 1; i++) {
+      children.add(boldSpan(dateStrings[i]));
+      if (i < dateStrings.length - 2) {
+        children.add(const TextSpan(text: ', ')); // normal text
+      }
+    }
+    // Add " and " in normal style
+    children.add(const TextSpan(text: ' או '));
+
+    // Add the last date in bold
+    children.add(boldSpan(dateStrings.last));
+
+    return TextSpan(children: children);
+  }
+
   @override
   void initState() {
     //DateTime today = DateTime.now();
@@ -1224,6 +1268,10 @@ class _ExchangeCardState extends State<ExchangeCard> {
       children: [
         Column(
           children: [
+            request.type == 'החלפה'?const Text('מעוניין להחליף עם '):const SizedBox.shrink(),
+            request.takeDays != null && request.type == 'החלפה'
+                ? RichText(text: takeDaysToTextSpan(request.takeDays!))
+                : const SizedBox.shrink(),
             Padding(
               padding: const EdgeInsets.only(top: 20, bottom: 20),
               child: Row(
@@ -1236,8 +1284,8 @@ class _ExchangeCardState extends State<ExchangeCard> {
                           builder: (BuildContext context) {
                             return AlertDialog(
                               content: SwapApproveWizard(
-                                  request: request,
-                                  ),
+                                request: request,
+                              ),
                             );
                           });
                     },
