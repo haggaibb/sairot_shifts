@@ -1,11 +1,13 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:shifts/db_create_new_event.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'dart:collection';
 import './utils.dart';
 import 'package:get/get.dart';
 import 'main.dart';
+import 'run_shifts_builder_algo.dart';
 import 'dart:convert';
 
 
@@ -34,7 +36,6 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
   late String selectedShiftsBuilderEvent;
 
 
-
   saveSettings() async{
     controller.currentEventStatus.value = selectedMode;
     controller.currentEvent.value = selectedEvent;
@@ -54,9 +55,11 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
     var auth = {
       'event_name' : selectedEvent,
       'admin' : '028619237' // hard code will change to have better sec
+      ''
     };
-    await triggerExtFunction(auth,'runShiftsBuilder');
+    await runShiftsBuilderAlgo(selectedEvent);
     controller.loading.value = false;
+    Navigator.pop(context);
     /// add msg to user!!!
 
   }
@@ -93,7 +96,8 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
                   title: const Text(_title)),
               body: Padding(
                 padding: const EdgeInsets.all(50.0),
-                child: Obx(() => !controller.loading.value?Form(
+                child: Obx(() => !controller.loading.value
+                    ?Form(
                   key: _formKey,
                   child: Column(
                     children: [
@@ -108,7 +112,7 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('ניהול סטוטס ארועים' , style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
+                                Text('הגדרות ארוע פעיל' , style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
                                 Card(
                                   child: Column(
                                     children: [
@@ -313,7 +317,7 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
                                                 runShiftsBuilder();
                                               }
                                               else {
-                                                print('not a vaild admin');
+                                                print('not a valid admin');
                                               }
                                             },
                                             child: const Text('הרץ שיבוץ'),
@@ -361,7 +365,14 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
                       ),
                     ],
                   )
-                ):CircularProgressIndicator()),
+                )
+                    :Center(child: Column(
+                      children: [
+                        Text(controller.statusMsg.value, style: TextStyle(fontSize: 20),),
+                        CircularProgressIndicator(),
+                      ],
+                    ))
+                ),
               )));
 
   }

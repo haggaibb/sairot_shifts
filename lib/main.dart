@@ -53,6 +53,7 @@ class Controller extends GetxController {
   Rx<DateTime> startDate = DateTime.now().obs;
   Rx<DateTime> endDate = DateTime.now().obs;
   RxBool loading = true.obs;
+  RxString statusMsg = 'loading...'.obs;
   RxBool platformOpen = true.obs;
   RxBool daysOffDone = true.obs;
   RxList daysForInstructor = [].obs;

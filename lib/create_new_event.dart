@@ -1,12 +1,10 @@
-
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'dart:collection';
 import './utils.dart';
 import 'package:get/get.dart';
 import 'main.dart';
-import 'dart:convert';
-
+import 'db_create_new_event.dart';
 
 class CreateNewEvent extends StatefulWidget {
   const CreateNewEvent({super.key});
@@ -20,6 +18,7 @@ class _CreateNewEventState extends State<CreateNewEvent> {
   final eventNameController = TextEditingController();
   final startDateController = TextEditingController();
   final instructorsPerDayController = TextEditingController();
+  List<DateTime> newEventDates = <DateTime>[];
   DateTime? startDate;
   DateTime? endDate;
   final endDateController = TextEditingController();
@@ -33,9 +32,7 @@ class _CreateNewEventState extends State<CreateNewEvent> {
     hashCode: getHashCode,
   );
   final controller = Get.put(Controller());
-  List<Instructor>  allInstructorsList = [];
-
-
+  List<Instructor> allInstructorsList = [];
 
   endDateTapFunction({required BuildContext context}) async {
     DateTime? pickedDate = await showDatePicker(
@@ -61,13 +58,14 @@ class _CreateNewEventState extends State<CreateNewEvent> {
     if (pickedDate == null) return;
     setState(() {
       startDateController.text = pickedDate.toIso8601String();
-      if(!(pickedDate.compareTo(endDate??DateTime.now()) < 0)){
+      if (!(pickedDate.compareTo(endDate ?? DateTime.now()) < 0)) {
         print("DT1 is not before DT2");
         endDate = pickedDate;
       }
       startDate = pickedDate;
     });
   }
+
   void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
     setState(() {
       _focusedDay = focusedDay;
@@ -77,48 +75,46 @@ class _CreateNewEventState extends State<CreateNewEvent> {
       } else {
         _selectedDays.add(selectedDay);
       }
+      newEventDates = _selectedDays.toList();
     });
-    controller.newEventDates.value = _selectedDays.toList();
   }
+
   createNewEvent() async {
     controller.loading.value = true;
     print('create new event...');
-    controller.newEvent.eventName = eventNameController.text;
-    controller.newEvent.startDate = DateTime.parse(startDateController.text);
-    controller.newEvent.endDate = DateTime.parse(endDateController.text);
-    print(instructorsPerDayController.text);
+    //controller.newEvent.eventName = eventNameController.text;
+    //controller.newEvent.startDate = DateTime.parse(startDateController.text);
+    //controller.newEvent.endDate = DateTime.parse(endDateController.text);
     print('prepare data...');
     List newEventInstructors = [];
     for (Instructor element in controller.newEventInstructors) {
-      var instructorData = getInstructorData(element.armyId, controller.eventInstructors);
-      newEventInstructors.add(
-        {
-          'armyId' :  instructorData['armyId'],
-          'first_name' : instructorData['firstName'],
-          'last_name' :instructorData['lastName'],
-          'mobile' : instructorData['mobile'],
-          'email' : instructorData['email'],
-          'maxDays' :  instructorData['maxDays']
-        }
-      );
+      var instructorData =
+          getInstructorData(element.armyId, controller.eventInstructors);
+      newEventInstructors.add({
+        'armyId': instructorData['armyId'],
+        'first_name': instructorData['firstName'],
+        'last_name': instructorData['lastName'],
+        'mobile': instructorData['mobile'],
+        'email': instructorData['email'],
+        'maxDays': instructorData['maxDays']
+      });
     }
     var newEventData = {
-      'event_name' : eventNameController.text,
-      'start_date' : startDateController.text,
-      'end_date' : endDateController.text,
-      'instructors_per_day' : instructorsPerDayController.text,
-      'event_instructors' :  jsonEncode(newEventInstructors),
-      'event_days' : jsonEncode(controller.eventDays)
-  };
-    await triggerExtFunction(newEventData,'createNewEvent');
+      'event_name': eventNameController.text,
+      'start_date': DateTime.parse(startDateController.text),
+      'end_date': DateTime.parse(endDateController.text),
+      'instructors_per_day': int.parse(instructorsPerDayController.text),
+      'event_instructors': newEventInstructors,
+      'event_days': newEventDates
+    };
+    await dbCreateNewEvent(newEventData);
+    //await triggerExtFunction(newEventData,'createNewEvent');
     print('new event created');
     controller.loading.value = false;
     Navigator.pop(context);
   }
 
-  onInit() async {
-  }
-
+  onInit() async {}
 
   @override
   Widget build(BuildContext context) {
@@ -137,130 +133,145 @@ class _CreateNewEventState extends State<CreateNewEvent> {
               body: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(50.0),
-                  child: Obx(() => !controller.loading.value?Form(
-                    key: _formKey,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(left :18.0),
-                                child: Text('שם הארוע'),
-                              ),
-                              SizedBox(
-                                width: 150,
-                                child: TextFormField(
-                                  controller: eventNameController,
-                      
+                  child: Obx(() => !controller.loading.value
+                      ? Form(
+                          key: _formKey,
+                          child: SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    const Padding(
+                                      padding: EdgeInsets.only(left: 18.0),
+                                      child: Text('שם הארוע'),
+                                    ),
+                                    SizedBox(
+                                      width: 150,
+                                      child: TextFormField(
+                                        controller: eventNameController,
+                                      ),
+                                    )
+                                  ],
                                 ),
-                              )
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(left :18.0),
-                                child: Text('תאריך התחלה'),
-                              ),
-                              SizedBox(
-                                width: 150,
-                                child: TextFormField(
-                                  controller: startDateController,
-                                  readOnly: true,
-                                  onTap: () => startDateTapFunction(context: context),
+                                Row(
+                                  children: [
+                                    const Padding(
+                                      padding: EdgeInsets.only(left: 18.0),
+                                      child: Text('תאריך התחלה'),
+                                    ),
+                                    SizedBox(
+                                      width: 150,
+                                      child: TextFormField(
+                                        controller: startDateController,
+                                        readOnly: true,
+                                        onTap: () => startDateTapFunction(
+                                            context: context),
+                                      ),
+                                    )
+                                  ],
                                 ),
-                              )
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(left :18.0),
-                                child: Text('תאריך סיום'),
-                              ),
-                              SizedBox(
-                                width: 150,
-                                child: TextFormField(
-                                  controller: endDateController,
-                                  onTap: () => endDateTapFunction(context: context),
+                                Row(
+                                  children: [
+                                    const Padding(
+                                      padding: EdgeInsets.only(left: 18.0),
+                                      child: Text('תאריך סיום'),
+                                    ),
+                                    SizedBox(
+                                      width: 150,
+                                      child: TextFormField(
+                                        controller: endDateController,
+                                        onTap: () => endDateTapFunction(
+                                            context: context),
+                                      ),
+                                    )
+                                  ],
                                 ),
-                              )
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(left :18.0),
-                                child: Text('מספר מדריכים ביום'),
-                              ),
-                              SizedBox(
-                                width: 150,
-                                child: TextFormField(
-                                  controller: instructorsPerDayController,
-                                  keyboardType: TextInputType.number,
-                                  onTap: () => {},
+                                Row(
+                                  children: [
+                                    const Padding(
+                                      padding: EdgeInsets.only(left: 18.0),
+                                      child: Text('מספר מדריכים ביום'),
+                                    ),
+                                    SizedBox(
+                                      width: 150,
+                                      child: TextFormField(
+                                        controller: instructorsPerDayController,
+                                        keyboardType: TextInputType.number,
+                                        onTap: () => {},
+                                      ),
+                                    )
+                                  ],
                                 ),
-                              )
-                            ],
-                          ),
-                          TableCalendar(
-                            locale: 'he_HE',
-                            weekendDays: const [DateTime.friday, DateTime.saturday],
-                            headerStyle: const HeaderStyle(
-                                titleCentered: true, formatButtonVisible: false),
-                            firstDay: startDate??DateTime.now(),
-                            lastDay:endDate??DateTime.now(),
-                            focusedDay: _focusedDay ?? startDate??DateTime.now(),
-                            calendarFormat: _calendarFormat,
-                            onFormatChanged: (format) {
-                              if (_calendarFormat != format) {
-                                setState(() {
-                                  _calendarFormat = format;
-                                });
-                              }
-                            },
-                            selectedDayPredicate: (day) {
-                              // Use values from Set to mark multiple days as selected
-                              return _selectedDays.contains(day);
-                            },
-                            calendarStyle: const CalendarStyle(
-                              defaultTextStyle: TextStyle(
-                                  color: Colors.blueAccent,
-                                  fontWeight: FontWeight.bold),
-                              weekendTextStyle: TextStyle(color: Colors.red),
-                              isTodayHighlighted: false,
-                              outsideDaysVisible: false,
-                              markersMaxCount: 0,
+                                TableCalendar(
+                                  locale: 'he_HE',
+                                  weekendDays: const [
+                                    DateTime.friday,
+                                    DateTime.saturday
+                                  ],
+                                  headerStyle: const HeaderStyle(
+                                      titleCentered: true,
+                                      formatButtonVisible: false),
+                                  firstDay: startDate ?? DateTime.now(),
+                                  lastDay: endDate ?? DateTime.now(),
+                                  focusedDay: _focusedDay ??
+                                      startDate ??
+                                      DateTime.now(),
+                                  calendarFormat: _calendarFormat,
+                                  onFormatChanged: (format) {
+                                    if (_calendarFormat != format) {
+                                      setState(() {
+                                        _calendarFormat = format;
+                                      });
+                                    }
+                                  },
+                                  selectedDayPredicate: (day) {
+                                    // Use values from Set to mark multiple days as selected
+                                    return _selectedDays.contains(day);
+                                  },
+                                  calendarStyle: const CalendarStyle(
+                                    defaultTextStyle: TextStyle(
+                                        color: Colors.blueAccent,
+                                        fontWeight: FontWeight.bold),
+                                    weekendTextStyle:
+                                        TextStyle(color: Colors.red),
+                                    isTodayHighlighted: false,
+                                    outsideDaysVisible: false,
+                                    markersMaxCount: 0,
+                                  ),
+                                  //eventLoader: _updateDaysPicked,
+                                  onDaySelected: _onDaySelected,
+                                ),
+                                InstructorsConfigPage(
+                                    controller.eventInstructors),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 30.0),
+                                  child: ElevatedButton(
+                                    onPressed: () async {
+                                      await createNewEvent();
+                                    },
+                                    child: const Text('שמור'),
+                                  ),
+                                ),
+                              ],
                             ),
-                            //eventLoader: _updateDaysPicked,
-                            onDaySelected: _onDaySelected,
                           ),
-                          InstructorsConfigPage(controller.eventInstructors),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 30.0),
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                  await createNewEvent();
-                              },
-                              child: const Text('שמור'),
+                        )
+                      : Center(
+                          child: Column(
+                          children: [
+                            Text(
+                              controller.statusMsg.value,
+                              style: TextStyle(fontSize: 20),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ):CircularProgressIndicator()),
+                            CircularProgressIndicator(),
+                          ],
+                        ))),
                 ),
               ))),
     );
   }
-
-
-
 }
-
-
-
 
 class InstructorsConfigPage extends StatefulWidget {
   final List<Instructor> allInstructorsList;
@@ -279,26 +290,35 @@ class _InstructorsConfigPageState extends State<InstructorsConfigPage> {
   onSortColum(int columnIndex, bool ascending) {
     if (columnIndex == 1) {
       if (ascending) {
-        widget.allInstructorsList.sort((a, b) => a.firstName.compareTo(b.firstName));
+        widget.allInstructorsList
+            .sort((a, b) => a.firstName.compareTo(b.firstName));
       } else {
-        widget.allInstructorsList.sort((a, b) => b.firstName.compareTo(a.firstName));
+        widget.allInstructorsList
+            .sort((a, b) => b.firstName.compareTo(a.firstName));
       }
     }
   }
 
   @override
-  void initState()  {
+  void initState() {
     super.initState();
-    selected = List<bool>.generate(widget.allInstructorsList.length, (int index) => false);
-    controller.newEventInstructors.value  = widget.allInstructorsList;
-    _textEditingControllers = List.generate(widget.allInstructorsList.length, (index)  {
+    selected = List<bool>.generate(
+        widget.allInstructorsList.length, (int index) => false);
+    controller.newEventInstructors.value = widget.allInstructorsList;
+    _textEditingControllers =
+        List.generate(widget.allInstructorsList.length, (index) {
       TextEditingController tmp = TextEditingController();
-      tmp.text = widget.allInstructorsList[index].maxDays!=null?widget.allInstructorsList[index].maxDays.toString():'17';
-      controller.newEventInstructors[index].setMaxDays = int.parse(widget.allInstructorsList[index].maxDays!=null?widget.allInstructorsList[index].maxDays.toString():'17');
+      tmp.text = widget.allInstructorsList[index].maxDays != null
+          ? widget.allInstructorsList[index].maxDays.toString()
+          : '17';
+      controller.newEventInstructors[index].setMaxDays = int.parse(
+          widget.allInstructorsList[index].maxDays != null
+              ? widget.allInstructorsList[index].maxDays.toString()
+              : '17');
       return tmp;
     });
-    sort=true;
-    onSortColum(1,true);
+    sort = true;
+    onSortColum(1, true);
   }
 
   @override
@@ -332,16 +352,19 @@ class _InstructorsConfigPageState extends State<InstructorsConfigPage> {
       ],
       rows: List<DataRow>.generate(
         widget.allInstructorsList.length,
-            (int index) => DataRow(
+        (int index) => DataRow(
           cells: <DataCell>[
-            DataCell(Text((index+1).toString())),
-            DataCell(Text(widget.allInstructorsList[index].firstName+' '+widget.allInstructorsList[index].lastName)),
+            DataCell(Text((index + 1).toString())),
+            DataCell(Text(widget.allInstructorsList[index].firstName +
+                ' ' +
+                widget.allInstructorsList[index].lastName)),
             DataCell(Text(widget.allInstructorsList[index].armyId)),
             DataCell(TextFormField(
               keyboardType: TextInputType.number,
               controller: _textEditingControllers[index],
               onEditingComplete: () => {
-                controller.newEventInstructors[index].setMaxDays = int.parse(_textEditingControllers[index].text)
+                controller.newEventInstructors[index].setMaxDays =
+                    int.parse(_textEditingControllers[index].text)
               },
             ))
           ],
