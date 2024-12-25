@@ -52,16 +52,10 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
 
   runShiftsBuilder() async {
     controller.loading.value = true;
-    var auth = {
-      'event_name' : selectedEvent,
-      'admin' : '028619237' // hard code will change to have better sec
-      ''
-    };
     await runShiftsBuilderAlgo(selectedEvent);
     controller.loading.value = false;
     Navigator.pop(context);
     /// add msg to user!!!
-
   }
 
 
@@ -367,6 +361,7 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
                   )
                 )
                     :Center(child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(controller.statusMsg.value, style: TextStyle(fontSize: 20),),
                         CircularProgressIndicator(),

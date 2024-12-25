@@ -22,6 +22,7 @@ import 'package:screenshot/screenshot.dart';
 import 'create_new_event.dart';
 import 'system_settings_page.dart';
 import 'reports.dart';
+import 'remove_instructor.dart';
 
 void main() async {
   await Firebase.initializeApp(
@@ -590,6 +591,25 @@ class Home extends StatelessWidget {
                           );
                         },
                       )
+                    : const Text(''),
+                (!controller.loading.value && controller.adminUX.value)
+                    ? ListTile(
+                  leading: const Icon(
+                    Icons.add_outlined,
+                  ),
+                  title: const Text('הסר מדריך מהמערכת'),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (context) => const Directionality(
+                            // add this
+                            textDirection: TextDirection
+                                .rtl, // set this property
+                            child: RemoveInstructor(),
+                          )),
+                    );
+                  },
+                )
                     : const Text(''),
                 (!controller.loading.value && controller.adminUX.value)
                     ? ListTile(

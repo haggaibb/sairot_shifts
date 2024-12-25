@@ -56,7 +56,7 @@ Future<bool> runShiftsBuilderAlgo(String targetEvent) async {
     // eventInstructorsList.forEach( async (instructorDoc)=>{ ... })
     // In Dart, we can't do an async forEach callback. We'll do a for loop:
     for (final instructorDoc in eventInstructorsList) {
-      controller.statusMsg.value = 'assign random shift for ${instructorDoc.id}';
+      controller.statusMsg.value = 'assign random shift for ID ${instructorDoc.id}';
       await _assignRandomShift(
         firestore: firestore,
         eventName: eventName,
@@ -181,7 +181,7 @@ Future<void> _assignRandomShift({
   // Attempt to assign a shift
   while (notDone && tries < 50) {
     final randomSlot = getRandomShiftSlot();
-    controller.statusMsg.value = '${controller.statusMsg.value}\ncheck random shift slot ${eventDaysList[randomSlot].id}';
+    controller.statusMsg.value = '${controller.statusMsg.value}\nsearch for a free shift slot at ${eventDaysList[randomSlot].id}';
     // if instructor not already in this day
     if (!listOfDaysWithAssignedInstructors[randomSlot].contains(instructorId)) {
       // check if day is not full

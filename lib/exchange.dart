@@ -468,7 +468,6 @@ class ExchangeHome extends StatelessWidget {
                     return Card(
                         child: ExpansionTile(
                       expandedAlignment: Alignment.topRight,
-                      //title: Text('${request.type=='exchange'?'החלפה':'למסור'} רוצה ${request.armyId}'),
                       title: Text(
                           '${request.fullName} רוצה ${request.type == 'החלפה' ? 'החלפה ' : 'מסירה '} '),
                       children: [
@@ -544,8 +543,8 @@ class ExchangeHome extends StatelessWidget {
                               }),
                         )
                       : const SizedBox.shrink()
-                  : Padding(
-                      padding: const EdgeInsets.all(100.0),
+                  : const Padding(
+                      padding: EdgeInsets.all(100.0),
                       child: Column(
                         children: [
                           LinearProgressIndicator(),
@@ -616,8 +615,6 @@ class _SwapRequestWizardState extends State<SwapRequestWizard> {
                           /// first step
                           /// check ID and load days if ID ok
                           if (_formKey.currentState!.validate()) {
-                            // If the form is valid, display a snackbar. In the real world,
-                            // you'd often call a server or save the information in a database.
                             await controller.loadDaysForInstructor(
                                 instructorIdController.text);
                             if (controller.daysForInstructor.isEmpty) {
@@ -661,7 +658,7 @@ class _SwapRequestWizardState extends State<SwapRequestWizard> {
                             const SnackBar(
                                 content: Text('לא נמצאו ימים לספר אישי זה')),
                           );
-                        } else if (typeDropdownValue != 'החלפה' && index == 3) {
+                        } else if (typeDropdownValue != 'החלפה' && index == 2) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                                 content:
@@ -854,9 +851,13 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
 
   @override
   void initState() {
-    DateTime firstTakeDay = widget.request.takeDays![0];
-    takedaysDropdownValue =
-        "${firstTakeDay.day.toString().padLeft(2, '0')}-${firstTakeDay.month.toString().padLeft(2, '0')}-${firstTakeDay.year.toString()}";
+    if (widget.request.type == 'החלפה') {
+      DateTime firstTakeDay = widget.request.takeDays![0];
+      takedaysDropdownValue =
+          "${firstTakeDay.day.toString().padLeft(2, '0')}-${firstTakeDay.month.toString().padLeft(2, '0')}-${firstTakeDay.year.toString()}";
+    } else {
+      takedaysDropdownValue = '--';
+    }
     super.initState();
   }
 
@@ -868,7 +869,7 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
           appBar: AppBar(
               leading: IconButton(
                 onPressed: () => {Navigator.pop(context)},
-                icon: Icon(Icons.arrow_back),
+                icon: const Icon(Icons.arrow_back),
               ),
               title: const Text(_title)),
           body: Center(
@@ -932,7 +933,7 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
                             }
                           } else {
                             /// not a swap so no need to check takeDay go on
-                            setState(() => _index++);
+                            setState(() => _index = _index + 2);
                           }
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -943,7 +944,8 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
                           Navigator.pop(context);
                         }
                       }
-                    } else if (_index == 1) {
+                    }
+                    else if (_index == 1) {
                       setState(() => _index++);
                       //Navigator.pop(context);
                     }
@@ -954,6 +956,10 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
                         const SnackBar(
                             content: Text('לא נמצאו ימים לספר אישי זה')),
                       );
+                    } else if (widget.request.type == 'החלפה' && index == 2) {
+                      setState(() {
+                        _index = index;
+                      });
                     } else {
                       setState(() {
                         _index = index;
@@ -1268,7 +1274,9 @@ class _ExchangeCardState extends State<ExchangeCard> {
       children: [
         Column(
           children: [
-            request.type == 'החלפה'?const Text('מעוניין להחליף עם '):const SizedBox.shrink(),
+            request.type == 'החלפה'
+                ? const Text('מעוניין להחליף עם ')
+                : const SizedBox.shrink(),
             request.takeDays != null && request.type == 'החלפה'
                 ? RichText(text: takeDaysToTextSpan(request.takeDays!))
                 : const SizedBox.shrink(),
@@ -1297,7 +1305,7 @@ class _ExchangeCardState extends State<ExchangeCard> {
                       return removeRequestApprovalDialog(context, request);
                     },
                     style: ButtonStyle(),
-                    child: Text('הסר'),
+                    child: const Text('הסר בקשה'),
                   ),
                 ],
               ),
