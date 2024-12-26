@@ -59,7 +59,7 @@ class Controller extends GetxController {
   RxBool daysOffDone = true.obs;
   RxList daysForInstructor = [].obs;
   RxInt maxInstructorsPerDay = 0.obs;
-  Rx<bool> adminUX = false.obs;
+  Rx<bool> adminUX = true.obs;
   RxList<String> admins = <String>[].obs;
   RxList<Instructor> newEventInstructors = RxList<Instructor>();
   RxList<DateTime> newEventDates = RxList<DateTime>();
@@ -601,12 +601,11 @@ class Home extends StatelessWidget {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                          builder: (context) => const Directionality(
-                            // add this
-                            textDirection: TextDirection
-                                .rtl, // set this property
-                            child: RemoveInstructor(),
-                          )),
+                        builder: (context) => const Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: RemoveInstructor(),
+                        ),
+                      ),
                     );
                   },
                 )

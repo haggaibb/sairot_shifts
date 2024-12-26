@@ -122,11 +122,8 @@ class ExchangeController extends GetxController {
     selectedDayRequests.clear();
     for (var element in requestsDayList) {
       var requestData = element.data() as Map<String, dynamic>;
-      //print(requestData['take_day'].length<1);
       if (requestData['take_day'].length < 1)
         requestData['take_day'] = [Timestamp.fromDate(DateTime(1971))];
-      //print(requestData);
-      //print(selectedDayRequests.length);
       addDayRequest(element.id, requestData);
     }
     _selectedDay = selectedDay;
@@ -529,7 +526,6 @@ class ExchangeHome extends StatelessWidget {
                           child: ListView.builder(
                               itemCount: controller.allRequests.length,
                               itemBuilder: (context, index) {
-                                //print(controller.allRequests[index]);
                                 final request = controller.allRequests[index];
                                 var giveDate = request.giveDay;
                                 // String takeDateStr =
@@ -951,12 +947,16 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
                     }
                   },
                   onStepTapped: (int index) {
-                    if (controller.daysForInstructor.isEmpty) {
+                    if ((index == 2 || index==1) && controller.daysWithoutInstructor.isEmpty)  {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                             content: Text('לא נמצאו ימים לספר אישי זה')),
                       );
-                    } else if (widget.request.type == 'החלפה' && index == 2) {
+                      setState(() {
+                        _index = 0;
+                      });
+                    }
+                     else if (widget.request.type == 'החלפה' && index == 2) {
                       setState(() {
                         _index = index;
                       });
@@ -989,7 +989,8 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
                           alignment: Alignment.centerRight,
                           child: Column(
                             children: [
-                              DropdownButton(
+                                widget.request.type == 'החלפה'
+                                    ? DropdownButton(
                                 onChanged: (String? value) {
                                   setState(() {
                                     takedaysDropdownValue = value!;
@@ -1004,7 +1005,8 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
                                     child: Text(value),
                                   );
                                 }).toList(),
-                              ),
+                              )
+                                    : Text('לא רלוונטי זו בקשת מסירה!'),
                             ],
                           ),
                         )),
