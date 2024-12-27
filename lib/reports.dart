@@ -5,6 +5,7 @@ import 'main.dart';
 import 'package:csv/csv.dart';
 import 'package:screenshot/screenshot.dart';
 import './utils.dart';
+import 'approvals_report.dart';
 
 class Reports extends StatefulWidget {
 
@@ -119,14 +120,15 @@ class _ReportsState extends State<Reports> {
                                // add this
                                  textDirection: TextDirection
                                      .rtl, // set this property
-                                 child: DaysInstructorsDetailedReportPage()
+                                 child: RequestApprovalsTableScreen()
                              )),
                        );
                      },
-                     child: const Text('הפקת דוח מילואים מפורט'),
+                     child: const Text(' דוח אישורי החלפה ומסירה'),
                    ),
                  ),
                ),
+
             ]),
           ),
         ));

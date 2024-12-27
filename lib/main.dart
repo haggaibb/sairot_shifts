@@ -59,7 +59,7 @@ class Controller extends GetxController {
   RxBool daysOffDone = true.obs;
   RxList daysForInstructor = [].obs;
   RxInt maxInstructorsPerDay = 0.obs;
-  Rx<bool> adminUX = true.obs;
+  Rx<bool> adminUX = false.obs;
   RxList<String> admins = <String>[].obs;
   RxList<Instructor> newEventInstructors = RxList<Instructor>();
   RxList<DateTime> newEventDates = RxList<DateTime>();
