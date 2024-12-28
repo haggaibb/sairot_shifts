@@ -271,6 +271,14 @@ class Controller extends GetxController {
       'event_status': currentEventStatus.value,
       'admins': admins
     });
+    // refresh data of the system
+    await loadEventMetadata();
+    await loadEventInstructors();
+    await loadEventDays();
+    if (platformOpen.value) {
+      await loadSelectedDayInstructors(_focusedDay.value);
+    }
+    await getAssignedDays();
     return;
   }
 

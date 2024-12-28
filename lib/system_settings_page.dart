@@ -37,9 +37,11 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
 
 
   saveSettings() async{
+    controller.loading.value = true;
     controller.currentEventStatus.value = selectedMode;
     controller.currentEvent.value = selectedEvent;
     await controller.updateSettings();
+    controller.loading.value = false;
     Navigator.pop(context);Navigator.pop(context);
     ScaffoldMessenger.of(context)
         .showSnackBar(
