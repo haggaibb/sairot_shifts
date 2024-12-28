@@ -152,6 +152,14 @@ class _PrefDatePickerState extends State<PrefDatePicker> {
                       'נא סמן את הימים שאינך יכול',
                       style: TextStyle(fontSize: 24),
                     )),
+                  ),
+                  const SizedBox(
+                    height: 100,
+                    child: Center(
+                        child: Text(
+                          'שים לב כל הזנה חדשה תמחק הזנה קודמת!!!',
+                          style: TextStyle(fontSize: 24, color: Colors.red),
+                        )),
                   ), //Title
                   TableCalendar(
                     locale: 'he_HE',
