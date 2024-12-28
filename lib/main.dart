@@ -86,10 +86,19 @@ class Controller extends GetxController {
     loading.value = false;
     update();
     print('done init.');
+    super.onInit();
   }
 
   initPref() async {
     //prefs = await SharedPreferences.getInstance();
+  }
+
+  bool isEventActive(String selectedEvent) {
+    if (eventName==selectedEvent) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   void addInstructor(String instructorId, var instructorData) {
@@ -171,7 +180,7 @@ class Controller extends GetxController {
   }
 
   loadEventMetadata() async {
-    DocumentReference eventConfigRef = db.doc('Events/config');
+    DocumentReference eventConfigRef = db.doc('System/config');
     DocumentSnapshot eventConfigQuery = await eventConfigRef.get();
     var eventConfig = eventConfigQuery.data() as Map<String, dynamic>;
     eventName = eventConfig['current_event'];

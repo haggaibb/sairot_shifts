@@ -52,10 +52,18 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
 
   runShiftsBuilder() async {
     controller.loading.value = true;
-    await runShiftsBuilderAlgo(selectedEvent);
+    if (controller.isEventActive(selectedShiftsBuilderEvent)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ארוע פעיל! לא ניתן להריץ שיבוץ')),
+      );
+      controller.loading.value = false;
+      return;
+    }
+    await runShiftsBuilderAlgo(selectedShiftsBuilderEvent);
     controller.loading.value = false;
-    Navigator.pop(context);
-    /// add msg to user!!!
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('השיבוץ הסתיים.')),
+    );
   }
 
 
@@ -307,10 +315,10 @@ class _SystemSettingsPageState extends State<SystemSettingsPage> {
                                                   builder: (BuildContext context) =>
                                                       AdminPinDialog(controller.admins));
                                               if (res??false) {
-                                                print('run shifts builder');
                                                 runShiftsBuilder();
                                               }
                                               else {
+                                                /// TODO snack msg
                                                 print('not a valid admin');
                                               }
                                             },
