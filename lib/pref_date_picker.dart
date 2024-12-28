@@ -146,21 +146,21 @@ class _PrefDatePickerState extends State<PrefDatePicker> {
                 //mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   const SizedBox(
-                    height: 100,
+                    height: 30,
                     child: Center(
                         child: Text(
                       'נא סמן את הימים שאינך יכול',
-                      style: TextStyle(fontSize: 24),
+                      style: TextStyle(fontSize: 20),
                     )),
                   ),
                   const SizedBox(
-                    height: 100,
+                    height: 30,
                     child: Center(
                         child: Text(
-                          'שים לב כל הזנה חדשה תמחק הזנה קודמת!!!',
-                          style: TextStyle(fontSize: 24, color: Colors.red),
+                          'שים לב! כל הזנה חדשה תמחק הזנה קודמת!',
+                          style: TextStyle(fontSize: 16, color: Colors.red),
                         )),
-                  ), //Title
+                  ),//Title
                   TableCalendar(
                     locale: 'he_HE',
                     weekendDays: const [DateTime.friday, DateTime.saturday],
