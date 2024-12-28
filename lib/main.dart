@@ -265,7 +265,7 @@ class Controller extends GetxController {
   }
 
   updateSettings() async {
-    DocumentReference eventConfigRef = db.doc('Events/config');
+    DocumentReference eventConfigRef = db.doc('System/config');
     await eventConfigRef.update({
       'current_event': currentEvent.value,
       'event_status': currentEventStatus.value,
