@@ -24,6 +24,9 @@ import 'system_settings_page.dart';
 import 'reports.dart';
 import 'remove_instructor.dart';
 
+// itdf sfsh hwzf uuty - google pass key
+// REMOVED_SECRET.YHsZPwbhshPdynL6TXUmkmr-XXuWyYWXQVYBN9w7cwk -  send grid smtp password
+
 void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -229,6 +232,7 @@ class Controller extends GetxController {
     var eventInstructorsList = eventInstructorsQuery.docs;
     eventInstructorsList.forEach((element) {
       var instructorData = element.data() as Map<String, dynamic>;
+
       addInstructor(element.id, instructorData);
     });
     //List<Instructor> eventInstructorsSorted = eventInstructors;
@@ -382,6 +386,33 @@ class Controller extends GetxController {
       'to': miluimEmails,
       'message': {'subject': subject, 'text': text, 'html': lines}
     });
+  }
+
+  saveEventInstructorsReportCSV() async {
+    List<List<dynamic>> rows = [];
+    rows.add(['שם משפחה', 'שם פרטי', 'מספר אישי']);
+    for (var instructor in eventInstructors) {
+      rows.add([
+        instructor.lastName,
+        instructor.firstName,
+        instructor.armyId.toString()
+      ]);
+    }
+    // Convert your CSV string to a Uint8List for downloading.
+    String csv = const ListToCsvConverter().convert(rows);
+    //Uint8List bytes = Uint8List.fromList(utf8.encode(csv));
+    List<int> intBytes = List.from(utf8.encode(csv));
+    intBytes.insert(0, 0xBF );
+    intBytes.insert(0, 0xBB );
+    intBytes.insert(0, 0xEF );
+    // This will download the file on the device.
+    Uint8List bytes = Uint8List.fromList(intBytes);
+    await FileSaver.instance.saveFile(
+      name: 'Event Instructors Report ${DateTime.now().toIso8601String()}', // you can give the CSV file name here.
+      bytes: bytes,
+      ext: 'csv',
+      mimeType: MimeType.csv,
+    );
   }
 
   saveInstructorsDayCountReportCSV(String dateKey) async {

@@ -317,6 +317,10 @@ class ExchangeController extends GetxController {
         db.collection('Events/$eventName/instructors');
     await instructorsRef.doc(id).set(data);
   }
+
+//   bool isValidId(String id) {
+//
+//   }
 }
 
 class ExchangeHome extends StatelessWidget {
@@ -841,9 +845,8 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
   List<String> takeDays = [];
   List<String> commonTakeDays = [];
   bool loading = true;
-  //String giveDateDropdownValue = '';
-  //String takeDateDropdownValue = '';
   final controller = Get.put(ExchangeController());
+  bool isIdValid = false;
 
   @override
   void initState() {
@@ -884,12 +887,18 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
                   onStepContinue: () async {
                     if (_index == 0) {
                       if (_formKey.currentState!.validate()) {
-                        if (instructorIdController.text == '') {
+                        if (instructorIdController.text == '' || (controller.eventInstructors.indexWhere((element) => element.armyId == instructorIdController.text)==-1)) {
+                          setState(() {
+                            isIdValid = false;
+                            instructorIdController.text == '';
+                            _index=0;
+                          });
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('מספר אישי לא תקין')),
                           );
                           return;
                         }
+                        isIdValid = true;
                         await controller.loadDaysWithoutInstructor(
                             instructorIdController.text);
                         var giveDayDate = widget.request.giveDay;
@@ -947,10 +956,16 @@ class _SwapApproveWizardState extends State<SwapApproveWizard> {
                     }
                   },
                   onStepTapped: (int index) {
-                    if ((index == 2 || index==1) && controller.daysWithoutInstructor.isEmpty)  {
+                    if (index==0) {
+                      setState(() {
+                        isIdValid = false;
+                        instructorIdController.text='';
+                      });
+                    }
+                    if ((index == 2 || index==1) && !isIdValid)  {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                            content: Text('לא נמצאו ימים לספר אישי זה')),
+                            content: Text('לא הוזנה ת.ז. או לא נמצאו ימים לספר אישי זה')),
                       );
                       setState(() {
                         _index = 0;

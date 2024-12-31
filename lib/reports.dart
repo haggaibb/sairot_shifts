@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'multi_date_picker.dart';
 import 'package:get/get.dart';
 import 'main.dart';
-import 'package:csv/csv.dart';
 import 'package:screenshot/screenshot.dart';
 import './utils.dart';
 import 'approvals_report.dart';
@@ -40,96 +39,70 @@ class _ReportsState extends State<Reports> {
             title: const Text('הפקת דוחות'),
           ),
           body: Center(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-             //mainAxisAlignment: MainAxisAlignment.spaceAround,
-             children: [
-               Padding(
-                 padding: const EdgeInsets.all(30.0),
-                 child: SizedBox(
-                   height: 75,
-                   width: 200,
-                   child: ElevatedButton(
-                     onPressed: () async {
-                       Navigator.of(context).push(
-                         MaterialPageRoute(
-                             builder: (context) => Directionality(
-                               // add this
-                                 textDirection: TextDirection
-                                     .rtl, // set this property
-                                 child: MultiDatePicker(instructorsPerDay: controller.instructorsPerDay, startDate: controller.startDate.value, endDate: controller.endDate.value,eventDays: controller.eventDays,)
-                             )),
-                       );
-                     },
-                     child: const Text('הפקת דוח מילואים רב יומי'),
-                   ),
-                 ),
-               ),
-               Padding(
-                 padding: const EdgeInsets.all(30.0),
-                 child: SizedBox(
-                  height: 75,
-                  width: 200,
+            child: GridView.builder(
+              padding: const EdgeInsets.all(30.0),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2, // Two buttons per row
+                crossAxisSpacing: 20.0, // Spacing between columns
+                mainAxisSpacing: 20.0, // Spacing between rows
+                childAspectRatio: 4, // Adjust the aspect ratio for button size
+              ),
+              itemCount: 5, // Total number of buttons
+              itemBuilder: (context, index) {
+                // Determine button properties based on index
+                String buttonText;
+                Widget targetPage;
+
+                switch (index) {
+                  case 0:
+                    buttonText = 'הפקת דוח מילואים רב יומי';
+                    targetPage = MultiDatePicker(
+                      instructorsPerDay: controller.instructorsPerDay,
+                      startDate: controller.startDate.value,
+                      endDate: controller.endDate.value,
+                      eventDays: controller.eventDays,
+                    );
+                    break;
+                  case 1:
+                    buttonText = 'הפקת דוח אילוצי מדריכים';
+                    targetPage = DaysOffReportPage();
+                    break;
+                  case 2:
+                    buttonText = 'הפקת דוח ימים מוקצים';
+                    targetPage = DaysCountReportPage();
+                    break;
+                  case 3:
+                    buttonText = 'דוח אישורי החלפה ומסירה';
+                    targetPage = RequestApprovalsTableScreen();
+                    break;
+                  case 4:
+                    buttonText = 'דוח אישורי כניסה';
+                    targetPage = EventInstructorsReportPage();
+                    break;
+                  default:
+                    buttonText = '';
+                    targetPage = const SizedBox(); // Fallback widget
+                }
+
+                return SizedBox(
+                  height: 60,
+                  width: 100,
                   child: ElevatedButton(
-                    onPressed: () async {
+                    onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                            builder: (context) => Directionality(
-                              // add this
-                                textDirection: TextDirection
-                                    .rtl, // set this property
-                                child: DaysOffReportPage()
-                            )),
+                          builder: (context) => Directionality(
+                            textDirection: TextDirection.rtl, // Set RTL
+                            child: targetPage, // Navigate to respective page
+                          ),
+                        ),
                       );
                     },
-                    child: const Text('הפקת דוח אילוצי מדריכים'),
+                    child: Text(buttonText),
                   ),
-                               ),
-               ),
-               Padding(
-                 padding: const EdgeInsets.all(30.0),
-                 child: SizedBox(
-                   height: 75,
-                   width: 200,
-                   child: ElevatedButton(
-                     onPressed: () async {
-                       Navigator.of(context).push(
-                         MaterialPageRoute(
-                             builder: (context) => Directionality(
-                               // add this
-                                 textDirection: TextDirection
-                                     .rtl, // set this property
-                                 child: DaysCountReportPage()
-                             )),
-                       );
-                     },
-                     child: const Text('הפקת דוח ימים מוקצים'),
-                   ),
-                 ),
-               ),
-               Padding(
-                 padding: const EdgeInsets.all(30.0),
-                 child: SizedBox(
-                   height: 75,
-                   width: 200,
-                   child: ElevatedButton(
-                     onPressed: () async {
-                       Navigator.of(context).push(
-                         MaterialPageRoute(
-                             builder: (context) => Directionality(
-                               // add this
-                                 textDirection: TextDirection
-                                     .rtl, // set this property
-                                 child: RequestApprovalsTableScreen()
-                             )),
-                       );
-                     },
-                     child: const Text(' דוח אישורי החלפה ומסירה'),
-                   ),
-                 ),
-               ),
-
-            ]),
+                );
+              },
+            ),
           ),
         ));
   }
@@ -646,4 +619,126 @@ class DaysInstructorsDetailedReportImage extends StatelessWidget {
     );
   }
 }
+///////////////
+///////////////
+class EventInstructorsReportPage extends StatelessWidget {
+  final controller = Get.put(Controller());
 
+  EventInstructorsReportPage(
+      {super.key});
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('רשימת המדריכים לארוע הפעיל'),
+          ),
+          body: Center(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      await controller.saveEventInstructorsReportCSV();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text(
+                              'הקובץ נשמר',
+                              style: TextStyle(color: Colors.white),
+                            )),
+                      );
+                    },
+                    child: Container(
+                      width: 180,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: const [
+                          Icon(Icons.table_rows_outlined),
+                          Text('שמור לקובץ CSV'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    child: Center(
+                      child: ListView.builder(
+                          itemCount: controller.eventInstructors.length,
+                          itemBuilder: (context, index) {
+                            final instructor = controller.eventInstructors[index];
+                            return Row(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 20),
+                                  child: Text(
+                                    '${index + 1}. ${instructor.firstName} ${instructor.lastName}',
+                                    style: TextStyle(
+                                      //fontWeight: FontWeight.bold,
+                                        fontSize: 12),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 5),
+                                  child: Text(
+                                    instructor.armyId,
+                                    style: TextStyle(
+                                      //fontWeight: FontWeight.bold,
+                                        fontSize: 14),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ));
+  }
+}
+class EventInstructorsReportImage extends StatelessWidget {
+  final String title;
+  final List<Instructor> instructors;
+
+
+  EventInstructorsReportImage(this.title, this.instructors, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        children: [
+          Image.network('assets/images/logo.png' ,height: 50,),
+          Text(title, style: TextStyle(fontSize: 20),),
+          const SizedBox(width: 200, child: Divider(thickness: 2, color: Colors.black,)),
+      DataTable(
+        columns: const [
+          DataColumn(label: Text('מספר')),
+          DataColumn(label: Text('מספר אישי')),
+          DataColumn(label: Text('שם פרטי')),
+          DataColumn(label: Text('שם משפחה')),
+        ],
+        rows: List.generate(
+          instructors.length,
+              (index) => DataRow(
+            cells: [
+              DataCell(Text('.${index + 1}')), // Serial number
+              DataCell(Text(instructors[index].armyId)), // Army ID
+              DataCell(Text(instructors[index].firstName)), // First name
+              DataCell(Text(instructors[index].lastName)), // Last name
+            ],
+          ),
+        ),
+      ),
+        ],
+      ),
+    );
+  }
+}
