@@ -10,7 +10,6 @@ import 'package:shifts/pref_date_picker.dart';
 import 'package:get/get.dart';
 import 'exchange.dart';
 import 'shifts_table_view.dart';
-import 'shifts_table_view2.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'contacts_list.dart';
 import 'add_new_instructor.dart';
@@ -81,7 +80,7 @@ class Controller extends GetxController {
     await loadEventInstructors();
     await loadEventDays();
     if (platformOpen.value) {
-      await loadSelectedDayInstructors(_focusedDay.value);
+      await loadSelectedDayInstructors(DateTime.now());
     }
     await getAssignedDays();
     //initPref();
@@ -139,6 +138,7 @@ class Controller extends GetxController {
     List list = Objectlist['instructors'];
     int delta = list.length - maxInstructorsPerDay.value;
     //int delta = list.length - selectedDayInstructors.length;
+    if (delta<0) delta = 0;
     List updatedDayList = [instructorId];
     for (var i = 0; i < delta; i++) {
       updatedDayList.add('--');

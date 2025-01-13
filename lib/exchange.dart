@@ -755,6 +755,14 @@ class _SwapRequestWizardState extends State<SwapRequestWizard> {
                               alignment: Alignment.centerRight,
                               child: ElevatedButton(
                                 onPressed: () async {
+                                  if (typeDropdownValue == 'החלפה' && selectedDaysToTake.isEmpty ) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text('בקשת החלפה מחיייבת הזנת ימים לקחת!' , style: TextStyle(fontSize: 20, color: Colors.red)),
+                                      ));
+                                    Navigator.pop(context);
+                                    return;
+                                  }
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                         content: Text('הבקשה נשלחת למערכת')),
