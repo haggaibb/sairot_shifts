@@ -313,8 +313,11 @@ class ExchangeController extends GetxController {
   }
 
   addInstructorToSystem(id, Map<String, dynamic> data) async {
-    CollectionReference instructorsRef =
+    CollectionReference eventInstructorsRef =
         db.collection('Events/$eventName/instructors');
+    await eventInstructorsRef.doc(id).set(data);
+    CollectionReference instructorsRef =
+    db.collection('Instructors');
     await instructorsRef.doc(id).set(data);
   }
 
