@@ -50,6 +50,7 @@ class Controller extends GetxController {
   List<String> eventDays = <String>[].obs;
   List miluimEmails = [].obs;
   List instructorsPerDay = [].obs;
+  RxList<Instructor> tomorrowInstructorsList= RxList<Instructor>();
   DateTime _selectedDay = DateTime.now();
   // Rx<DateTime> _focusedDay = DateTime.utc(2023, 1, 4).obs;
   Rx<DateTime> _focusedDay = DateTime.now().obs;
@@ -83,6 +84,7 @@ class Controller extends GetxController {
       await loadSelectedDayInstructors(DateTime.now());
     }
     await getAssignedDays();
+    await loadTomorrowDayInstructors();
     //initPref();
     //adminUX.value = prefs.getBool('admin')??false;
     loading.value = false;
@@ -101,6 +103,31 @@ class Controller extends GetxController {
     } else {
       return false;
     }
+  }
+
+
+  loadTomorrowDayInstructors() async {
+    DateTime today  = DateTime.now();
+    if (today.day >= endDate.value.day || today.day< startDate.value.day-1) today = startDate.value;
+    DateTime tomorrow = today.add(const Duration(days: 1));
+    String dateKey =
+        "${tomorrow.day.toString().padLeft(2, '0')}-${tomorrow.month.toString().padLeft(2, '0')}-${tomorrow.year.toString()}";
+    DocumentReference eventDaysRef =
+    db.collection('Events/$eventName/days').doc(dateKey);
+    DocumentSnapshot daySnap = await eventDaysRef.get();
+    tomorrowInstructorsList.clear();
+    var dayData = daySnap.data() as Map<String, dynamic>;
+    List selectedDayInstructorsId = dayData['instructors'];
+    int index = 0;
+    while (index < eventInstructors.length) {
+      if (selectedDayInstructorsId.contains(eventInstructors[index].armyId)) {
+        tomorrowInstructorsList.add(eventInstructors[index]);
+      }
+      index++;
+    }
+    tomorrowInstructorsList.sort(
+            (a, b) => a.firstName.toString().compareTo(b.firstName.toString()));
+    update();
   }
 
   void addInstructor(String instructorId, var instructorData) {
@@ -264,8 +291,52 @@ class Controller extends GetxController {
     update();
   }
 
-  getDayInstructorsList(DateTime selectedDay) async {
+  Future<List<Instructor>> getTomorrowInstructors() async {
+    List<Instructor> instructors =[];
+    DateTime today  = DateTime.now();
+    DateTime tomorrow = today.add(const Duration(days: 1));
+    String dateKey =
+        "${tomorrow.day.toString().padLeft(2, '0')}-${tomorrow.month.toString().padLeft(2, '0')}-${tomorrow.year.toString()}";
+    CollectionReference instructorsDayRef =
+    db.collection('Events/$eventName/days/$dateKey/instructors');
+    QuerySnapshot instructorsDaySnap = await instructorsDayRef.get();
+    var instructorsList = instructorsDaySnap.docs;
+    for (var element in instructorsList) {
+      var instructorData = element.data() as Map<String, dynamic>;
+      instructors.add(Instructor(
+        element.id,
+        instructorData['first_name'],
+        instructorData['last_name'],
+        instructorData['mobile'],
+        instructorData['email'],
+      ));
+    }
+    return instructors;
+  }
 
+  getDayInstructorsList(DateTime selectedDay) async {
+    if (selectedDay.weekday == DateTime.saturday ||
+        selectedDay.weekday == DateTime.friday) return;
+    String dateKey =
+        "${selectedDay.day.toString().padLeft(2, '0')}-${selectedDay.month.toString().padLeft(2, '0')}-${selectedDay.year.toString()}";
+    DocumentReference eventDaysRef =
+    db.collection('Events/$eventName/days').doc(dateKey);
+    DocumentSnapshot daySnap = await eventDaysRef.get();
+    selectedDayInstructors.clear();
+    var dayData = daySnap.data() as Map<String, dynamic>;
+    List selectedDayInstructorsId = dayData['instructors'];
+    int index = 0;
+    while (index < eventInstructors.length) {
+      if (selectedDayInstructorsId.contains(eventInstructors[index].armyId)) {
+        selectedDayInstructors.add(eventInstructors[index]);
+      }
+      index++;
+    }
+    selectedDayInstructors.sort(
+            (a, b) => a.firstName.toString().compareTo(b.firstName.toString()));
+    _selectedDay = selectedDay;
+    _focusedDay.value = selectedDay;
+    update();
   }
 
   updateSettings() async {
@@ -409,6 +480,35 @@ class Controller extends GetxController {
     Uint8List bytes = Uint8List.fromList(intBytes);
     await FileSaver.instance.saveFile(
       name: 'Event Instructors Report ${DateTime.now().toIso8601String()}', // you can give the CSV file name here.
+      bytes: bytes,
+      ext: 'csv',
+      mimeType: MimeType.csv,
+    );
+  }
+
+  saveTomorrowInstructorsCSV(String title, List<TextEditingController> groups) async {
+    List<List<dynamic>> rows = [];
+    rows.add([ 'קבוצה','שם משפחה', 'שם פרטי']);
+    var index = 0;
+    for (var instructor in tomorrowInstructorsList) {
+      rows.add([
+        groups[index].text,
+        instructor.lastName,
+        instructor.firstName,
+      ]);
+      index++;
+    }
+    // Convert your CSV string to a Uint8List for downloading.
+    String csv = const ListToCsvConverter().convert(rows);
+    //Uint8List bytes = Uint8List.fromList(utf8.encode(csv));
+    List<int> intBytes = List.from(utf8.encode(csv));
+    intBytes.insert(0, 0xBF );
+    intBytes.insert(0, 0xBB );
+    intBytes.insert(0, 0xEF );
+    // This will download the file on the device.
+    Uint8List bytes = Uint8List.fromList(intBytes);
+    await FileSaver.instance.saveFile(
+      name: '$title  ${DateTime.now().toIso8601String()}', // you can give the CSV file name here.
       bytes: bytes,
       ext: 'csv',
       mimeType: MimeType.csv,

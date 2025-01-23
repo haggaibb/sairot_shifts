@@ -47,12 +47,11 @@ class _ReportsState extends State<Reports> {
                 mainAxisSpacing: 20.0, // Spacing between rows
                 childAspectRatio: 4, // Adjust the aspect ratio for button size
               ),
-              itemCount: 5, // Total number of buttons
+              itemCount: 6, // Total number of buttons
               itemBuilder: (context, index) {
                 // Determine button properties based on index
                 String buttonText;
                 Widget targetPage;
-
                 switch (index) {
                   case 0:
                     buttonText = 'הפקת דוח מילואים רב יומי';
@@ -79,6 +78,10 @@ class _ReportsState extends State<Reports> {
                     buttonText = 'דוח אישורי כניסה';
                     targetPage = EventInstructorsReportPage();
                     break;
+                  case 5:
+                    buttonText = 'דוח קבוצות למחר';
+                    targetPage = TomorrowGroupsReportPage();
+                    break;
                   default:
                     buttonText = '';
                     targetPage = const SizedBox(); // Fallback widget
@@ -88,7 +91,7 @@ class _ReportsState extends State<Reports> {
                   height: 60,
                   width: 100,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => Directionality(
@@ -740,5 +743,126 @@ class EventInstructorsReportImage extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+///////////////
+///////////////
+class TomorrowGroupsReportPage extends StatefulWidget {
+
+  const TomorrowGroupsReportPage({super.key});
+
+  @override
+  State<TomorrowGroupsReportPage> createState() => _TomorrowGroupsReportPageState();
+}
+
+class _TomorrowGroupsReportPageState extends State<TomorrowGroupsReportPage> {
+  final controller = Get.put(Controller());
+  final DateTime today  = DateTime.now();
+  late DateTime tomorrow;
+  late String tomorrowDateKey;
+  List<TextEditingController> groupsCtrl =[];
+
+
+  @override
+  void initState() {
+    tomorrow = today.add(const Duration(days: 1));
+    tomorrowDateKey =
+        "${tomorrow.day.toString().padLeft(2, '0')}-${tomorrow.month.toString().padLeft(2, '0')}-${tomorrow.year.toString()}";
+    for (var element in controller.tomorrowInstructorsList) {
+      groupsCtrl.add(TextEditingController());
+    }
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('דוח קבוצות למחר'),
+          ),
+          body: Center(
+            child: SingleChildScrollView(
+              child: Column(
+                  children: [
+                    //Image.network('assets/images/logo.png' ,height: 50,),
+                    //const Text('דוח קבוצות למחר', style: TextStyle(fontSize: 20),),
+                    Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          await controller.saveTomorrowInstructorsCSV(tomorrowDateKey,groupsCtrl);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text(
+                                  'הקובץ נשמר',
+                                  style: TextStyle(color: Colors.white),
+                                )),
+                          );
+                        },
+                        child: Container(
+                          width: 180,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: const [
+                              Icon(Icons.table_rows_outlined),
+                              Text('שמור לקובץ CSV'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Text(tomorrowDateKey, style: TextStyle(fontSize: 20),),
+                    const SizedBox(width: 200, child: Divider(thickness: 2, color: Colors.black,)),
+                    Directionality(textDirection: TextDirection.rtl,
+                        child: DataTable(
+                            columns: const <DataColumn>[
+                              DataColumn(
+                                label: Text(
+                                  textDirection: TextDirection.rtl,
+                                  '',
+                                  style: TextStyle(fontStyle: FontStyle.italic),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  textDirection: TextDirection.rtl,
+                                  'שם מלא',
+                                  style: TextStyle(fontStyle: FontStyle.italic),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  textDirection: TextDirection.rtl,
+                                  'קבוצה',
+                                  style: TextStyle(fontStyle: FontStyle.italic),
+                                ),
+                              ),
+                            ],
+                            rows: List.generate(controller.tomorrowInstructorsList.length, (index) =>
+                                DataRow(
+                                  cells: <DataCell>[
+                                    DataCell(Text(index.toString(), style: TextStyle(fontSize: 8), softWrap: true, textDirection: TextDirection.rtl)),
+                                    DataCell(Text(textDirection: TextDirection.rtl,'${controller.tomorrowInstructorsList[index].firstName} ${controller.tomorrowInstructorsList[index].lastName}')),
+                                    DataCell(
+                                        TextField(
+                                          controller: groupsCtrl[index],
+                                          enabled: true,
+                                        )
+                                    ),
+                                  ],
+                                ))
+                        ))
+                  ]
+              ),
+            ),
+          ),
+        ));
   }
 }
