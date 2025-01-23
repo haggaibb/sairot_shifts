@@ -689,7 +689,7 @@ class Home extends StatelessWidget {
                         },
                       )
                     : const Text(''),
-                !controller.loading.value
+                !controller.loading.value && controller.platformOpen.value
                     ? ListTile(
                         leading: const Icon(
                           Icons.contacts_outlined,
