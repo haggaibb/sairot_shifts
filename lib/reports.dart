@@ -848,7 +848,7 @@ class _TomorrowGroupsReportPageState extends State<TomorrowGroupsReportPage> {
                             rows: List.generate(controller.tomorrowInstructorsList.length, (index) =>
                                 DataRow(
                                   cells: <DataCell>[
-                                    DataCell(Text(index.toString(), style: TextStyle(fontSize: 8), softWrap: true, textDirection: TextDirection.rtl)),
+                                    DataCell(Text((index+1).toString(), style: TextStyle(fontSize: 8), softWrap: true, textDirection: TextDirection.rtl)),
                                     DataCell(Text(textDirection: TextDirection.rtl,'${controller.tomorrowInstructorsList[index].firstName} ${controller.tomorrowInstructorsList[index].lastName}')),
                                     DataCell(
                                         TextField(
