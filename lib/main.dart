@@ -98,7 +98,7 @@ class Controller extends GetxController {
   }
 
   bool isEventActive(String selectedEvent) {
-    if (eventName==selectedEvent) {
+    if (eventName==selectedEvent && platformOpen.value) {
       return true;
     } else {
       return false;
@@ -109,6 +109,7 @@ class Controller extends GetxController {
   loadTomorrowDayInstructors() async {
     DateTime today  = DateTime.now();
     if (today.day >= endDate.value.day || today.day< startDate.value.day-1) today = startDate.value;
+    today = startDate.value;
     DateTime tomorrow = today.add(const Duration(days: 1));
     String dateKey =
         "${tomorrow.day.toString().padLeft(2, '0')}-${tomorrow.month.toString().padLeft(2, '0')}-${tomorrow.year.toString()}";
@@ -116,18 +117,20 @@ class Controller extends GetxController {
     db.collection('Events/$eventName/days').doc(dateKey);
     DocumentSnapshot daySnap = await eventDaysRef.get();
     tomorrowInstructorsList.clear();
-    var dayData = daySnap.data() as Map<String, dynamic>;
-    List selectedDayInstructorsId = dayData['instructors'];
-    int index = 0;
-    while (index < eventInstructors.length) {
-      if (selectedDayInstructorsId.contains(eventInstructors[index].armyId)) {
-        tomorrowInstructorsList.add(eventInstructors[index]);
+    if (daySnap.exists) {
+      var dayData = daySnap.data() as Map<String, dynamic>;
+      List selectedDayInstructorsId = dayData['instructors'];
+      int index = 0;
+      while (index < eventInstructors.length) {
+        if (selectedDayInstructorsId.contains(eventInstructors[index].armyId)) {
+          tomorrowInstructorsList.add(eventInstructors[index]);
+        }
+        index++;
       }
-      index++;
+      tomorrowInstructorsList.sort(
+              (a, b) => a.firstName.toString().compareTo(b.firstName.toString()));
+      update();
     }
-    tomorrowInstructorsList.sort(
-            (a, b) => a.firstName.toString().compareTo(b.firstName.toString()));
-    update();
   }
 
   void addInstructor(String instructorId, var instructorData) {
@@ -224,11 +227,12 @@ class Controller extends GetxController {
     Timestamp timestampDaysOffEndDate =
         eventMetadata['days_off_end_date'] ?? DateTime(2000);
     DateTime daysOffEndDate = timestampDaysOffEndDate.toDate();
-    if (currentEventStatus == 'אילוצים')
+    if (currentEventStatus.value == 'אילוצים') {
       daysOffDone.value = false;
-    else
+    } else {
       daysOffDone.value =
           (daysOffEndDate.compareTo(DateTime.now()) < 0) ? false : true;
+    }
     startDate.value = timestampStart.toDate();
     Timestamp timestampEnd = eventMetadata['end_date'];
     endDate.value = timestampEnd.toDate();
@@ -651,7 +655,7 @@ class Home extends StatelessWidget {
                         },
                       )
                     : const Text(''),
-                controller.daysOffDone.value
+                !controller.daysOffDone.value
                     ? ListTile(
                         leading: const Icon(
                           Icons.date_range_rounded,
@@ -1181,7 +1185,7 @@ class LoadingLogo extends StatelessWidget {
         ),
         Center(
             child: Container(
-                width: 350, child: Image.network('assets/images/logo.png'))),
+                width: 350, child: Image.network('assets/images/logo_round.png'))),
         Center(
             child: Container(
                 child: const Text(
@@ -1212,7 +1216,7 @@ class EventNotOpen extends StatelessWidget {
         Center(
             child: Container(
                 child: Text(
-          daysOffDone ? 'המערכת פתוחה רק להזנת אילוצים' : 'המערכת סגורה',
+          daysOffDone ? 'המערכת סגורה' : 'המערכת פתוחה רק להזנת אילוצים' ,
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ))),
       ],

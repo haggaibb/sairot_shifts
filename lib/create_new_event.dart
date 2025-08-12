@@ -103,6 +103,7 @@ class _CreateNewEventState extends State<CreateNewEvent> {
       'event_name': eventNameController.text,
       'start_date': DateTime.parse(startDateController.text),
       'end_date': DateTime.parse(endDateController.text),
+      'days_off_and_date' : DateTime.parse(startDateController.text),
       'instructors_per_day': int.parse(instructorsPerDayController.text),
       'event_instructors': newEventInstructors,
       'event_days': newEventDates

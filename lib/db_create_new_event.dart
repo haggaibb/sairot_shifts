@@ -14,7 +14,7 @@ Future<void> dbCreateNewEvent(Map<String, dynamic> eventMetaData) async {
   final instructorsPerDay = eventMetaData['instructors_per_day'] as int;
   // debug fields
   final editDaysOffEndDate = DateTime.now(); // or from eventMetaData if needed
-  final adminIds = <String>['028619237']; // For debug: Hard-coded admin IDs
+  final adminIds = controller.admins; // <String>['028619237']; // For debug: Hard-coded admin IDs
 
   // 2) start and end dates
   final dateFormat = DateFormat('d-MM-yyyy');

@@ -9,8 +9,8 @@ Future<bool> runShiftsBuilderAlgo(String targetEvent) async {
   final firestore = FirebaseFirestore.instance;
   final controller = Get.put(Controller());
 
-  //final eventName = targetEvent;
-  final eventName = 'test';
+  final eventName = targetEvent;
+  //final eventName = 'test';
 
 
 
