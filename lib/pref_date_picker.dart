@@ -33,7 +33,7 @@ class _PrefDatePickerState extends State<PrefDatePicker> {
   var editDaysOffEndDate = DateTime.now();
   var isLoading = true;
   loadEventMetadata() async {
-    DocumentReference eventConfigRef = db.doc('Events/config');
+    DocumentReference eventConfigRef = db.doc('System/config');
     DocumentSnapshot eventConfigQuery = await eventConfigRef.get();
     var eventConfig = eventConfigQuery.data() as Map<String, dynamic>;
     eventName = eventConfig['current_event'];
@@ -53,6 +53,8 @@ class _PrefDatePickerState extends State<PrefDatePicker> {
       isLoading = false;
     });
   }
+
+
   Future<void> addDaysOffRequest(instructorId) async {
     DocumentReference initialDaysOffRequest = FirebaseFirestore.instance
         .collection('/Events/$eventName/instructors/')
