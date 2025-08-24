@@ -1,10 +1,4 @@
 
-import 'dart:collection';
-import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'firebase_options.dart';
-import 'package:table_calendar/table_calendar.dart';
 import 'package:http/http.dart' as http;
 
 
@@ -22,8 +16,8 @@ class Instructor {
 
   Instructor(this.armyId,this.firstName,this.lastName,this.mobile,this.email,{this.maxDays, this.daysOff, this.assignDays=0});
 
-  void set setMaxDays(int _maxDays) {
-    maxDays = _maxDays;
+  set setMaxDays(int maxDays) {
+    maxDays = maxDays;
   }
 
   void addAssignedDay() {

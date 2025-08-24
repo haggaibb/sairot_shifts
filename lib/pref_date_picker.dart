@@ -10,16 +10,15 @@ class PrefDatePicker extends StatefulWidget {
   final List<String> eventDays;
 
   PrefDatePicker({Key? key, DateTime? startDate, DateTime? endDate, List<String>? eventDays})
-      : this.startDate = startDate ?? DateTime.now(),
-        this.endDate = endDate ?? DateTime.now(),
-        this.eventDays = eventDays ?? [];
+      : startDate = startDate ?? DateTime.now(),
+        endDate = endDate ?? DateTime.now(),
+        eventDays = eventDays ?? [];
   @override
   State<PrefDatePicker> createState() => _PrefDatePickerState();
 }
 
 class _PrefDatePickerState extends State<PrefDatePicker> {
   var db = FirebaseFirestore.instance;
-  late final ValueNotifier<List<Instructor>> _selectedInstructors;
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime? _focusedDay;
   final Set<DateTime> _selectedDays = LinkedHashSet<DateTime>(
@@ -27,7 +26,7 @@ class _PrefDatePickerState extends State<PrefDatePicker> {
     hashCode: getHashCode,
   );
 
-  var eventMetadata = null;
+  var eventMetadata;
   var eventName = '';
   var eventInstructors = [];
   var editDaysOffEndDate = DateTime.now();
@@ -44,9 +43,9 @@ class _PrefDatePickerState extends State<PrefDatePicker> {
         db.collection('Events/$eventName/instructors');
     QuerySnapshot eventInstructorsQuery = await eventInstructorsRef.get();
     var eventInstructorsList = eventInstructorsQuery.docs;
-    eventInstructorsList.forEach((element) {
+    for (var element in eventInstructorsList) {
       eventInstructors.add(element.id);
-    });
+    }
     Timestamp timestampDaysOffEndDate = eventMetadata['days_off_end_date'];
     setState(() {
       editDaysOffEndDate = timestampDaysOffEndDate.toDate();
@@ -107,37 +106,9 @@ class _PrefDatePickerState extends State<PrefDatePicker> {
 
   @override
   Widget build(BuildContext context) {
-    CollectionReference dates = FirebaseFirestore.instance.collection('Dates');
     final formKey = GlobalKey<FormState>();
     final instructorIdController = TextEditingController();
-    final DateTime now = DateTime.now();
-    //if (isLoading) return const Center(child: Text('טוען'));
-    //  if (now.compareTo(editDaysOffEndDate) > 0) {
-    if (false) {
-      return Directionality(
-          textDirection: TextDirection.rtl,
-          child: Scaffold(
-            appBar: AppBar(
-              title: Text('בחירת ימי חופש'),
-            ),
-            body: Center(
-              child: Column(
-                children: [
-                  const SizedBox(height: 200),
-                  const Text('עבר הזמן להזנת ימי חופש',
-                      style: TextStyle(fontSize: 24)),
-                  const SizedBox(height: 250),
-                  ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: const Text('חזרה'))
-                ],
-              ),
-            ),
-          ));
-    } else {
-      return Directionality(
+    return Directionality(
           textDirection: TextDirection.rtl,
           child: Scaffold(
             appBar: AppBar(
@@ -248,6 +219,5 @@ class _PrefDatePickerState extends State<PrefDatePicker> {
               ),
             ),
           ));
-    }
   }
 }

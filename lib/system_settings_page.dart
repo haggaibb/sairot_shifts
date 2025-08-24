@@ -1,14 +1,8 @@
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:shifts/db_create_new_event.dart';
-import 'package:table_calendar/table_calendar.dart';
-import 'dart:collection';
-import './utils.dart';
 import 'package:get/get.dart';
 import 'main.dart';
 import 'run_shifts_builder_algo.dart';
-import 'dart:convert';
 
 
 class SystemSettingsPage extends StatefulWidget {

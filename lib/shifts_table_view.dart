@@ -42,7 +42,7 @@ class _ShiftsTableViewState extends State<ShiftsTableView> {
      return
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: Container(
+          child: SizedBox(
             width: widget.instructorsPerDayList.length * cellWidth,
             child: GridView.count(
               //childAspectRatio: 0.6,

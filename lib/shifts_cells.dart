@@ -28,7 +28,7 @@ class DateCell extends StatelessWidget {
       ),
       alignment: Alignment.center,
       child: Text(
-        '${value ?? ''}',
+        value,
         style: TextStyle(fontSize: 13.0, fontWeight: FontWeight.bold),
       ),
     );
@@ -62,7 +62,7 @@ class ShiftCell extends StatelessWidget {
       ),
       alignment: Alignment.center,
       child: Text(
-        '${value ?? ''}',
+        value,
         style: TextStyle(fontSize: 12.0),
       ),
     );

@@ -226,14 +226,14 @@ class ExchangeController extends GetxController {
   }
 
   approveRequest(String instructorId, Request request, String? takeDay) async {
-    var requestObject = {
-      'instructor_id': request.armyId,
-      'full_name': request.fullName,
-      'give_day': request.giveDay,
-      'take_day': takeDay,
-      'type': request.type,
-      'request_init': request.requestInit
-    };
+    // var requestObject = {
+    //   'instructor_id': request.armyId,
+    //   'full_name': request.fullName,
+    //   'give_day': request.giveDay,
+    //   'take_day': takeDay,
+    //   'type': request.type,
+    //   'request_init': request.requestInit
+    // };
     if (instructorId == '') return;
 
     /// first give day to instructor
@@ -394,14 +394,13 @@ class ExchangeHome extends StatelessWidget {
                   ),
                 ],
               ));
-        });
+        }
+        );
   }
-
   List<Request> _getRequestsForDay(DateTime selectedDay) {
     return controller.selectedDayRequests;
   }
-
-  final _dialogFormKey = GlobalKey<FormState>();
+  //final _dialogFormKey = GlobalKey<FormState>();
   final instructorIdController = TextEditingController();
   final removalIdController = TextEditingController();
   String typeDropdownValue = listType.first;
@@ -636,10 +635,6 @@ class _SwapRequestWizardState extends State<SwapRequestWizard> {
                                     controller.daysForInstructor[0];
                                 takeDateDropdownValue =
                                     controller.daysWithoutInstructor[0];
-                                for (var element
-                                    in controller.daysWithoutInstructor) {
-                                  //daysToTake.add(false);
-                                }
                                 _index++;
                               });
                             }
@@ -785,10 +780,6 @@ class _SwapRequestWizardState extends State<SwapRequestWizard> {
                                       giveDateDropdownValue.split('-');
                                   var giveDateForParse =
                                       '${giveSplitResult[2]}-${giveSplitResult[1]}-${giveSplitResult[0]}';
-                                  var takeSplitResult =
-                                      takeDateDropdownValue.split('-');
-                                  var takeDateForParse =
-                                      '${takeSplitResult[2]}-${takeSplitResult[1]}-${takeSplitResult[0]}';
                                   controller.eventInstructors
                                       .forEach((element) async {
                                     if (element.armyId ==

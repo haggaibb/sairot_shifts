@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
 import 'dart:math'; // for random
 import 'package:get/get.dart';
 import 'main.dart';
+import 'package:intl/intl.dart';
+
 
 // A rough conversion of your Node.js runShiftsBuilder(targetEvent) function
 Future<bool> runShiftsBuilderAlgo(String targetEvent) async {
@@ -31,32 +32,42 @@ Future<bool> runShiftsBuilderAlgo(String targetEvent) async {
   print('Got event metadata for event => $eventName');
   controller.statusMsg.value = 'Got event metadata for event $eventName';
 
+
   // 3) Get event Days
   final eventDaysSnap = await daysCollectionRef.get();
   final eventDaysList = eventDaysSnap.docs;
+  /// clean days from old data
+  for (final dayDoc in  eventDaysList) {
+    await dayDoc.reference.update({'instructors': []});
+    print('✅ Cleared instructors for day doc: ${dayDoc.id}');
+  }
   print('Got the list of Days in the event $eventName');
   controller.statusMsg.value = 'Got the list of Days in the event $eventName';
   // 4) Get event instructors
-  final eventInstructorsSnap = await eventInstructorsDocRef.get();
+  final eventInstructorsSnap = await eventInstructorsDocRef.where('maxDays', isGreaterThan: 0).get();
   final eventInstructorsList = eventInstructorsSnap.docs;
-  print('Got the list of instructors for the event $eventName');
-  controller.statusMsg.value = 'Got the list of instructors for the event $eventName';
-
+  print('Got the list(${eventInstructorsSnap.docs.length}) of instructors for the event $eventName');
+  controller.statusMsg.value = 'Got the list(${eventInstructorsSnap.docs}) of instructors for the event $eventName';
 
   // array struct to manage the random shift pick
   // In Node code:  "var listOfDaysWithAssignedInsturctors = new Array(eventDaysList.length);"
   // In Dart:
   final List<List<String>> listOfDaysWithAssignedInstructors =
   List.generate(eventDaysList.length, (_) => <String>[]);
-
   // 6) The random shift assignment loops
   // We do 10 runs, as in your Node code: "for (var i=0; i<10;i++) {...}"
   for (var i = 0; i < 10; i++) {
     controller.statusMsg.value = 'Algo run number $i';
+    print('Algo run number $i');
     // eventInstructorsList.forEach( async (instructorDoc)=>{ ... })
     // In Dart, we can't do an async forEach callback. We'll do a for loop:
     for (final instructorDoc in eventInstructorsList) {
       controller.statusMsg.value = 'assign random shift for ID ${instructorDoc.id}';
+      //print('assign random shift for ID ${instructorDoc.id}');
+      print('eventDaysList = ${eventDaysList.length}');
+      print(eventDaysList.first.id);
+      print(eventDaysList.first.data());
+
       await _assignRandomShift(
         firestore: firestore,
         eventName: eventName,
@@ -85,19 +96,16 @@ Future<void> _assignRandomShift({
   final instructorId = instructorDoc.id;
   final maxDays = instructorData['max_days'] as int? ?? 5; // arbitrary fallback
   final daysOff = (instructorData['days_off'] as List<dynamic>?) ?? [];
-
   bool notDone = true;
   int foundShift = -1;
   int tries = 0;
   final controller = Get.put(Controller());
-
   // Provide a function to get a random day index
   int getRandomShiftSlot() {
     final min = 0;
     final max = eventDaysList.length - 1;
     return Random().nextInt(max - min + 1) + min;
   }
-
   // check if instructor reached max day limit
   bool checkMaxDaysLimitReached() {
     // count how many days instructor already assigned
@@ -107,7 +115,6 @@ Future<void> _assignRandomShift({
         daysCounter++;
       }
     }
-
     // We also see logic about realMaxLimit in Node code (daysCounter/(listOfDaysWithAssignedInstructors.length - days_off.length) >1).
     final totalDays = listOfDaysWithAssignedInstructors.length;
     final offCount = daysOff.length;
@@ -124,14 +131,21 @@ Future<void> _assignRandomShift({
   // check if day is a day off
   bool isDayOff(int dayIndex) {
     if (dayIndex < 0 || dayIndex >= eventDaysList.length) {
+      print('invalid day');
       return true; // invalid day => treat as day off
     }
     final daySnap = eventDaysList[dayIndex];
-    final dayData = daySnap.data() as Map<String, dynamic>;
-    final dayTimestamp = dayData['date'] as Timestamp?;
-    if (dayTimestamp == null) return true;
+    final dayData = daySnap.id;
+    // 1. Convert String to DateTime
+    DateFormat format = DateFormat("dd-MM-yyyy");
+    DateTime dateTime = format.parse(dayData);
+    Timestamp timestamp = Timestamp.fromDate(dateTime);
+    // 2. Convert DateTime to Timestamp
+    print(dateTime);
+    final dayTimestamp = Timestamp.fromDate(dateTime);
+    //final dayData = daySnap.data() as Map<String, dynamic>;
     final dateToCheck = dayTimestamp.toDate();
-
+    print('compare dayToCheck with each item in daysOff...');
     // compare dayToCheck with each item in daysOff
     for (final dOff in daysOff) {
       if (dOff is Timestamp) {
@@ -140,6 +154,7 @@ Future<void> _assignRandomShift({
         if (offDate.year == dateToCheck.year &&
             offDate.month == dateToCheck.month &&
             offDate.day == dateToCheck.day) {
+          print('is day off');
           return true;
         }
       }
@@ -182,19 +197,28 @@ Future<void> _assignRandomShift({
   while (notDone && tries < 50) {
     final randomSlot = getRandomShiftSlot();
     controller.statusMsg.value = '${controller.statusMsg.value}\nsearch for a free shift slot at ${eventDaysList[randomSlot].id}';
+    //print('${controller.statusMsg.value}\nsearch for a free shift slot at ${eventDaysList[randomSlot].id}');
     // if instructor not already in this day
+    print('is instructor already in this day?');
+    print(listOfDaysWithAssignedInstructors[randomSlot].contains(instructorId));
     if (!listOfDaysWithAssignedInstructors[randomSlot].contains(instructorId)) {
+      print('--looking at ${eventDaysList[randomSlot].id}');
       // check if day is not full
       if (listOfDaysWithAssignedInstructors[randomSlot].length < instructorsPerDay) {
+        print('----day is not full');
         // check if instructor has not reached max days
         if (!checkMaxDaysLimitReached()) {
+          print('------not reached max');
+          print('#### day off? ${isDayOff(randomSlot)}');
           if (!isDayOff(randomSlot)) {
+            print('--------not a day off');
             if (!checkNoWeekendBridge(randomSlot)) {
               // success, assign
               notDone = false;
               foundShift = randomSlot;
               listOfDaysWithAssignedInstructors[randomSlot].add(instructorId);
               // Update Firestore docs => day + instructor
+              print('%%% Found Shift %%');
               final dayDocId = eventDaysList[randomSlot].id;
               final dayDocRef = firestore
                   .collection('Events')
@@ -205,11 +229,7 @@ Future<void> _assignRandomShift({
               await dayDocRef.update({
                 'instructors': FieldValue.arrayUnion([instructorId]),
               });
-              final instructorRef = firestore
-                  .collection('Events')
-                  .doc(eventName)
-                  .collection('instructors')
-                  .doc(instructorId);
+
             } else {
               // conflict - weekend bridging
               // print('conflict - weekendbridge');

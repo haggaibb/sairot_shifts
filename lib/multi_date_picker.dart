@@ -1,4 +1,3 @@
-import 'dart:js_interop';
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -84,14 +83,14 @@ class _MultiDatePickerState extends State<MultiDatePicker> {
 
   Future<void> generateReport() async {
     List selectedDays = [];
-    _selectedDays.forEach((element) {
+    for (var element in _selectedDays) {
       selectedDays.add(
          {
            'index': element.day-widget.startDate.day,
            'date' : element
          }
       );
-    });
+    }
     screenshotController
         .captureFromLongWidget(
       InheritedTheme.captureAll(
@@ -140,10 +139,7 @@ class _MultiDatePickerState extends State<MultiDatePicker> {
 
   @override
   Widget build(BuildContext context) {
-    CollectionReference dates = FirebaseFirestore.instance.collection('Dates');
     final formKey = GlobalKey<FormState>();
-    final instructorIdController = TextEditingController();
-    final DateTime now = DateTime.now();
     return Directionality(
           textDirection: TextDirection.rtl,
           child: Scaffold(
@@ -271,7 +267,7 @@ class MultiDayReportImage extends StatelessWidget {
               children: List.generate(selectedDays.length, (rowIndex) =>
                   Column(
                     children: [
-                      Text(toDateKey(selectedDays[rowIndex]['date']) , style: TextStyle(fontWeight: FontWeight.bold),),
+                      Text(toDateKey(selectedDays[rowIndex]['date']) , style: const TextStyle(fontWeight: FontWeight.bold),),
                       SizedBox(
                         height: 800,
                         width: 300,

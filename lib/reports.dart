@@ -268,11 +268,11 @@ class DaysCountReportPage extends StatelessWidget {
                             )),
                       );
                     },
-                    child: Container(
+                    child: const SizedBox(
                       width: 180,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: const [
+                        children: [
                           Icon(Icons.save_alt),
                           Text('הורד דוח'),
                         ],
@@ -293,11 +293,11 @@ class DaysCountReportPage extends StatelessWidget {
                             )),
                       );
                     },
-                    child: Container(
+                    child: const SizedBox(
                       width: 180,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: const [
+                        children: [
                           Icon(Icons.table_rows_outlined),
                           Text('שמור לקובץ CSV'),
                         ],
@@ -306,36 +306,34 @@ class DaysCountReportPage extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: Container(
-                    child: Center(
-                      child: ListView.builder(
-                          itemCount: controller.eventInstructors.length,
-                          itemBuilder: (context, index) {
-                            final instructor = controller.eventInstructors[index];
-                            return Row(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 20),
-                                  child: Text(
-                                    '${index + 1}. ${instructor.firstName} ${instructor.lastName}',
-                                    style: TextStyle(
-                                      //fontWeight: FontWeight.bold,
-                                        fontSize: 12),
-                                  ),
+                  child: Center(
+                    child: ListView.builder(
+                        itemCount: controller.eventInstructors.length,
+                        itemBuilder: (context, index) {
+                          final instructor = controller.eventInstructors[index];
+                          return Row(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(right: 20),
+                                child: Text(
+                                  '${index + 1}. ${instructor.firstName} ${instructor.lastName}',
+                                  style: TextStyle(
+                                    //fontWeight: FontWeight.bold,
+                                      fontSize: 12),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 5),
-                                  child: Text(
-                                    controller.eventInstructors[index].assignDays.toString(),
-                                    style: TextStyle(
-                                      //fontWeight: FontWeight.bold,
-                                        fontSize: 14),
-                                  ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 5),
+                                child: Text(
+                                  controller.eventInstructors[index].assignDays.toString(),
+                                  style: TextStyle(
+                                    //fontWeight: FontWeight.bold,
+                                      fontSize: 14),
                                 ),
-                              ],
-                            );
-                          }),
-                    ),
+                              ),
+                            ],
+                          );
+                        }),
                   ),
                 ),
               ],
@@ -433,11 +431,11 @@ class DaysInstructorsDetailedReportPage extends StatelessWidget {
                             )),
                       );
                     },
-                    child: Container(
+                    child: const SizedBox(
                       width: 180,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: const [
+                        children: [
                           Icon(Icons.save_alt),
                           Text('הורד דוח'),
                         ],
@@ -472,83 +470,81 @@ class DaysInstructorsDetailedReportPage extends StatelessWidget {
                 //   ),
                 // ),
                 Expanded(
-                  child: Container(
-                    child: Center(
-                      child: ListView.builder(
-                          itemCount: controller.eventInstructors.length,
-                          itemBuilder: (context, index) {
-                            return Card(
-                              elevation: 2,
-                              shadowColor: Colors.greenAccent,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: <Widget>[
-                                  ListTile(
-                                    //leading: Icon(Icons.album),
-                                    title: Text('${controller.eventInstructors[index].firstName} ${controller.eventInstructors[index].lastName}',style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                    subtitle: Text(controller.eventInstructors[index].armyId),
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: <Widget>[
-                                      const Padding(
-                                        padding: EdgeInsets.only(left:8,right:20,top :0, bottom: 0),
-                                        child: Text('ימים מוקצים' ,style: TextStyle(fontWeight: FontWeight.bold),),
+                  child: Center(
+                    child: ListView.builder(
+                        itemCount: controller.eventInstructors.length,
+                        itemBuilder: (context, index) {
+                          return Card(
+                            elevation: 2,
+                            shadowColor: Colors.greenAccent,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                ListTile(
+                                  //leading: Icon(Icons.album),
+                                  title: Text('${controller.eventInstructors[index].firstName} ${controller.eventInstructors[index].lastName}',style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                  subtitle: Text(controller.eventInstructors[index].armyId),
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: <Widget>[
+                                    const Padding(
+                                      padding: EdgeInsets.only(left:8,right:20,top :0, bottom: 0),
+                                      child: Text('ימים מוקצים' ,style: TextStyle(fontWeight: FontWeight.bold),),
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: <Widget>[
+                                    Padding(
+                                      padding: const EdgeInsets.only(left:8.0,right:20,top :0, bottom: 5),
+                                      child: Text(controller.eventInstructors[index].assignDays.toString()),
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: <Widget>[
+                                    const Padding(
+                                      padding: EdgeInsets.only(left:8.0,right:20,top :5, bottom: 0),
+                                      child: Text('אילוצים',style: TextStyle(fontWeight: FontWeight.bold)),
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  children: [
+                                    controller.eventInstructors[index].daysOff!.isNotEmpty?
+                                    Padding(
+                                      padding: const EdgeInsets.only(left:0.0,right:20,top :0, bottom: 0),
+                                      child: SizedBox(
+                                        height: ((controller.eventInstructors[index].daysOff!.length/4).floorToDouble()+1)*50,
+                                        width: 200,
+                                        child: controller.eventInstructors[index].daysOff!.isNotEmpty?
+                                            GridView.count(
+                                              shrinkWrap: true,
+                                          crossAxisCount: 4,
+                                          children: List.generate(controller.eventInstructors[index].daysOff!.length, (daysOffIndex) {
+                                            return Text(
+                                              '${(controller.eventInstructors[index].daysOff?[daysOffIndex].toDate()).day}/'
+                                                  '${(controller.eventInstructors[index].daysOff?[daysOffIndex].toDate()).month}',
+                                            );
+                                          }),
+                                        )
+                                            :Text('אין אילוצים'),
                                       ),
-                                    ],
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: <Widget>[
-                                      Padding(
-                                        padding: const EdgeInsets.only(left:8.0,right:20,top :0, bottom: 5),
-                                        child: Text(controller.eventInstructors[index].assignDays.toString()),
-                                      ),
-                                    ],
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: <Widget>[
-                                      const Padding(
-                                        padding: EdgeInsets.only(left:8.0,right:20,top :5, bottom: 0),
-                                        child: Text('אילוצים',style: TextStyle(fontWeight: FontWeight.bold)),
-                                      ),
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      controller.eventInstructors[index].daysOff!.length>0?
-                                      Padding(
-                                        padding: const EdgeInsets.only(left:0.0,right:20,top :0, bottom: 0),
-                                        child: SizedBox(
-                                          height: ((controller.eventInstructors[index].daysOff!.length/4).floorToDouble()+1)*50,
-                                          width: 200,
-                                          child: controller.eventInstructors[index].daysOff!.length>0?
-                                              GridView.count(
-                                                shrinkWrap: true,
-                                            crossAxisCount: 4,
-                                            children: List.generate(controller.eventInstructors[index].daysOff!.length, (daysOffIndex) {
-                                              return Text(
-                                                '${(controller.eventInstructors[index].daysOff?[daysOffIndex].toDate()).day}/'
-                                                    '${(controller.eventInstructors[index].daysOff?[daysOffIndex].toDate()).month}',
-                                              );
-                                            }),
-                                          )
-                                              :Text('אין אילוצים'),
-                                        ),
-                                      )
-                                      :Padding(
-                                        padding: EdgeInsets.only(left:0.0,right:20,top :0, bottom: 5),
-                                        child: Text('אין אילוצים'),
-                                      ),
+                                    )
+                                    :Padding(
+                                      padding: EdgeInsets.only(left:0.0,right:20,top :0, bottom: 5),
+                                      child: Text('אין אילוצים'),
+                                    ),
 
-                                    ],
-                                  )
-                                ],
-                              ),
-                            );
-                          }),
-                    ),
+                                  ],
+                                )
+                              ],
+                            ),
+                          );
+                        }),
                   ),
                 ),
               ],
@@ -655,11 +651,11 @@ class EventInstructorsReportPage extends StatelessWidget {
                             )),
                       );
                     },
-                    child: Container(
+                    child: const SizedBox(
                       width: 180,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: const [
+                        children: [
                           Icon(Icons.table_rows_outlined),
                           Text('שמור לקובץ CSV'),
                         ],
@@ -719,7 +715,7 @@ class EventInstructorsReportImage extends StatelessWidget {
       child: Column(
         children: [
           Image.network('assets/images/logo.png' ,height: 50,),
-          Text(title, style: TextStyle(fontSize: 20),),
+          Text(title, style: const TextStyle(fontSize: 20),),
           const SizedBox(width: 200, child: Divider(thickness: 2, color: Colors.black,)),
       DataTable(
         columns: const [
@@ -806,11 +802,11 @@ class _TomorrowGroupsReportPageState extends State<TomorrowGroupsReportPage> {
                                 )),
                           );
                         },
-                        child: Container(
+                        child: const SizedBox(
                           width: 180,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: const [
+                            children: [
                               Icon(Icons.table_rows_outlined),
                               Text('שמור לקובץ CSV'),
                             ],

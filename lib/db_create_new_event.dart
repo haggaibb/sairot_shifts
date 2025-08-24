@@ -17,7 +17,7 @@ Future<void> dbCreateNewEvent(Map<String, dynamic> eventMetaData) async {
   final adminIds = controller.admins; // <String>['028619237']; // For debug: Hard-coded admin IDs
 
   // 2) start and end dates
-  final dateFormat = DateFormat('d-MM-yyyy');
+  //final dateFormat = DateFormat('d-MM-yyyy');
   final eventInstructors = eventMetaData['event_instructors'];
   print('add to db, this may take a while.....');
   controller.statusMsg.value = 'creating new event, this may take a while.....';

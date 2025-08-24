@@ -335,8 +335,6 @@ class _InstructorsConfigPageState extends State<InstructorsConfigPage> {
           numeric: false,
           label: Text(' שם המדריך'),
           onSort: (columnIndex, ascending) {
-            print(columnIndex);
-            print(ascending);
             setState(() {
               sort = !sort;
             });

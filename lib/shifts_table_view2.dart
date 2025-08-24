@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:linked_scroll_controller/linked_scroll_controller.dart';
 import 'shifts_cells.dart';
 
 class ShiftsTableView2 extends StatefulWidget {
@@ -34,7 +33,7 @@ class _ShiftsTableView2State extends State<ShiftsTableView2> {
      return
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: Container(
+          child: SizedBox(
             width: widget.instructorsPerDayList.length * cellWidth,
             child: DataTable(
               columns:  List.generate(widget.instructorsPerDayList.length, (dayIndex) {
