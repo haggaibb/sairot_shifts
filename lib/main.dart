@@ -81,7 +81,9 @@ class Controller extends GetxController {
     await loadEventInstructors();
     await loadEventDays();
     if (platformOpen.value) {
-      await loadSelectedDayInstructors(DateTime.now());
+      DateTime now = DateTime.now();
+      DateTime validDate = startDate.value.isAfter(now) ? startDate.value : now;
+      await loadSelectedDayInstructors(validDate);
     }
     await getAssignedDays();
     await loadTomorrowDayInstructors();
@@ -673,7 +675,8 @@ class Home extends StatelessWidget {
                         },
                       )
                     : const Text(''),
-                controller.platformOpen.value
+                //controller.platformOpen.value
+                false /// TODO change after september 2025, uncomment line before and remove false
                     ? ListTile(
                         // to do fix hardcode of no exchange
                         leading: const Icon(
