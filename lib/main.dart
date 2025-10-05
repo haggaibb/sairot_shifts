@@ -233,7 +233,7 @@ class Controller extends GetxController {
       daysOffDone.value = false;
     } else {
       daysOffDone.value =
-          (daysOffEndDate.compareTo(DateTime.now()) < 0) ? false : true;
+         (daysOffEndDate.compareTo(DateTime.now()) < 0) ? true : false;
     }
     startDate.value = timestampStart.toDate();
     Timestamp timestampEnd = eventMetadata['end_date'];
@@ -622,7 +622,8 @@ class Home extends StatelessWidget {
                 child: Column(children: [
                   SizedBox(
                       width: 80,
-                      child: Image.network('assets/images/logo.png')),
+                      child: Image.network('assets/images/logo.png')
+                  ),
                   const Text(
                     'ימי סיירות',
                     style: TextStyle(fontSize: 20),
