@@ -9,16 +9,17 @@ class Instructor {
   final String lastName;
   final String mobile;
   final String email;
-  int? maxDays;
+  int _maxDays;
   final List<dynamic>? daysOff;
   int  assignDays;
+  int get maxDays => _maxDays;
 
+  Instructor(this.armyId,this.firstName,this.lastName,this.mobile,this.email,this._maxDays,{ this.daysOff, this.assignDays=0});
 
-  Instructor(this.armyId,this.firstName,this.lastName,this.mobile,this.email,{this.maxDays, this.daysOff, this.assignDays=0});
-
-  set setMaxDays(int maxDays) {
-    maxDays = maxDays;
+  set maxDays(int maxDays) {
+    _maxDays = maxDays;
   }
+
 
   void addAssignedDay() {
     assignDays = assignDays + 1;

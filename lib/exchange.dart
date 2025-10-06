@@ -40,7 +40,8 @@ class ExchangeController extends GetxController {
         instructorData['last_name'],
         instructorData['mobile'],
         instructorData['email'],
-        maxDays: maxDaysInt));
+        instructorData['max_days']
+    ));
   }
 
   void addDayRequest(String requestId, var requestData) {

@@ -294,7 +294,7 @@ class _InstructorsConfigPageState extends State<InstructorsConfigPage> {
     _textEditingControllers = List.generate(widget.allInstructorsList.length, (index)  {
       TextEditingController tmp = TextEditingController();
       tmp.text = widget.allInstructorsList[index].maxDays!=null?widget.allInstructorsList[index].maxDays.toString():'17';
-      controller.newEventInstructors[index].setMaxDays = int.parse(widget.allInstructorsList[index].maxDays!=null?widget.allInstructorsList[index].maxDays.toString():'17');
+      controller.newEventInstructors[index].maxDays = int.parse(widget.allInstructorsList[index].maxDays!=null?widget.allInstructorsList[index].maxDays.toString():'17');
       return tmp;
     });
     sort=true;
@@ -341,7 +341,7 @@ class _InstructorsConfigPageState extends State<InstructorsConfigPage> {
               keyboardType: TextInputType.number,
               controller: _textEditingControllers[index],
               onEditingComplete: () => {
-                controller.newEventInstructors[index].setMaxDays = int.parse(_textEditingControllers[index].text)
+                controller.newEventInstructors[index].maxDays = int.parse(_textEditingControllers[index].text)
               },
             ))
           ],
@@ -349,7 +349,12 @@ class _InstructorsConfigPageState extends State<InstructorsConfigPage> {
           onSelectChanged: (bool? value) {
             setState(() {
               selected[index] = value!;
-              controller.selectedNewEventInstructors = selected;
+              if (value) {
+                controller.selectedNewEventInstructors.add(widget.allInstructorsList[index]);
+              } else {
+                controller.selectedNewEventInstructors.remove(widget.allInstructorsList[index]);
+                /// TODO remove
+              }
             });
           },
         ),
