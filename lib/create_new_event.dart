@@ -88,6 +88,19 @@ class _CreateNewEventState extends State<CreateNewEvent> {
       );
       return;
     }
+    if (startDateController.text.isEmpty || endDateController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('אנא הזן תאריכים תקינים')),
+      );
+      return;
+    }
+    final instructorsPerDay = int.tryParse(instructorsPerDayController.text);
+    if (instructorsPerDay == null || instructorsPerDay <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('אנא הזן מספר מדריכים חוקי')),
+      );
+      return;
+    }
     /// start creation
     controller.loading.value = true;
     List<Map<String, dynamic>> newEventInstructors = [];
@@ -149,65 +162,25 @@ class _CreateNewEventState extends State<CreateNewEvent> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      Row(
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.only(left: 18.0),
-                            child: Text('שם הארוע'),
-                          ),
-                          SizedBox(
-                            width: 150,
-                            child: TextFormField(
-                              controller: eventNameController,
-                            ),
-                          )
-                        ],
+                      LabeledInputField(
+                        label: 'שם הארוע',
+                        controller: eventNameController,
                       ),
-                      Row(
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.only(left: 18.0),
-                            child: Text('תאריך התחלה'),
-                          ),
-                          SizedBox(
-                            width: 150,
-                            child: TextFormField(
-                              controller: startDateController,
-                              readOnly: true,
-                              onTap: () => startDateTapFunction(context: context),
-                            ),
-                          )
-                        ],
+                      LabeledInputField(
+                        label: 'תאריך התחלה',
+                        controller: startDateController,
+                        readOnly: true,
+                        onTap: () => startDateTapFunction(context: context),
                       ),
-                      Row(
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.only(left: 18.0),
-                            child: Text('תאריך סיום'),
-                          ),
-                          SizedBox(
-                            width: 150,
-                            child: TextFormField(
-                              controller: endDateController,
-                              onTap: () => endDateTapFunction(context: context),
-                            ),
-                          )
-                        ],
+                      LabeledInputField(
+                        label: 'תאריך סיום',
+                        controller: endDateController,
+                        onTap: () => endDateTapFunction(context: context),
                       ),
-                      Row(
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.only(left: 18.0),
-                            child: Text('מספר מדריכים ביום'),
-                          ),
-                          SizedBox(
-                            width: 150,
-                            child: TextFormField(
-                              controller: instructorsPerDayController,
-                              keyboardType: TextInputType.number,
-                            ),
-                          )
-                        ],
+                      LabeledInputField(
+                        label: 'מספר מדריכים ביום',
+                        controller: instructorsPerDayController,
+                        keyboardType: TextInputType.number,
                       ),
                       TableCalendar(
                         locale: 'he_HE',
@@ -228,6 +201,11 @@ class _CreateNewEventState extends State<CreateNewEvent> {
                         },
                         selectedDayPredicate: (day) => _selectedDays.contains(day),
                         calendarStyle: const CalendarStyle(
+                          selectedDecoration: BoxDecoration(
+                            color: Colors.deepPurple,
+                            shape: BoxShape.circle,
+                          ),
+                          selectedTextStyle: TextStyle(color: Colors.white),
                           defaultTextStyle: TextStyle(
                               color: Colors.blueAccent,
                               fontWeight: FontWeight.bold),
@@ -274,7 +252,43 @@ class _CreateNewEventState extends State<CreateNewEvent> {
   }
 }
 
+class LabeledInputField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final bool readOnly;
+  final VoidCallback? onTap;
+  final TextInputType keyboardType;
 
+  const LabeledInputField({
+    required this.label,
+    required this.controller,
+    this.readOnly = false,
+    this.onTap,
+    this.keyboardType = TextInputType.text,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 18.0),
+          child: Text(label),
+        ),
+        SizedBox(
+          width: 150,
+          child: TextFormField(
+            controller: controller,
+            readOnly: readOnly,
+            onTap: onTap,
+            keyboardType: keyboardType,
+          ),
+        )
+      ],
+    );
+  }
+}
 
 class InstructorsConfigPage extends StatefulWidget {
   final List<Instructor> allInstructorsList;
