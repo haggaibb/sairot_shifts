@@ -77,6 +77,7 @@ secrets.json
 *.bak
 *.backup
 lib-v1.zip
+web2/
 
 # Temporary files
 *.tmp
